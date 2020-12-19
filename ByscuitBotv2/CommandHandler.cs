@@ -56,21 +56,105 @@ namespace byscuitBot
 
         private Task Client_GuildMemberUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
         {
+            printConsole($"GuildMember Updated | User 1: {arg1} | User 2: {arg2}");
+            return Task.CompletedTask;
+        }
+        
+
+        private Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState vState1, SocketVoiceState vState2)
+        {
+            // Read audit log and tell who mutes/deafens another user
+            SocketGuild guild = null;
+            if (vState1.VoiceChannel != null) guild = vState1.VoiceChannel.Guild;
+            else if (vState2.VoiceChannel != null) guild = vState2.VoiceChannel.Guild;
+            if(vState1.VoiceChannel != vState2.VoiceChannel)
+            {
+                return Task.CompletedTask;
+                if (vState2.VoiceChannel == null) return Task.CompletedTask;
+                /* Tells which user joined what voice channel
+                 * Good for voice spammers, bad for text spammers
+                    SocketTextChannel sChannel = GetTextChannel("security", guild);
+                    if (sChannel == null) return Task.CompletedTask;
+
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.WithAuthor("Server Report", user.GetAvatarUrl());
+                    string msg = $"**{user}**_({user.Id})_ joined **{vState2.VoiceChannel.Name}** Voice Channel";
+                    embed.Description = msg;
+                    embed.WithFooter(DateTime.Now.ToLocalTime().ToString("dddd, dd MMMM yyyy hh:mm tt"));
+                    var nTask = Task.Run(async ()=> await sChannel.SendMessageAsync("", false, embed.Build()));
+                    nTask.RunSynchronously();
+                */
+            }
+            if (guild == null) return Task.CompletedTask;
+            var task = Task.Run(async () => await printAudit(guild, user));
+            
+            task.RunSynchronously();
+            return Task.CompletedTask;
+        }
+       
+        private async Task printAudit(SocketGuild guild, SocketUser user)
+        {
+            SocketTextChannel sChannel = GetTextChannel("security", guild);
+            if (sChannel == null) await Task.CompletedTask;
+            List<IReadOnlyCollection<RestAuditLogEntry>> aLog = await guild.GetAuditLogsAsync(1).ToListAsync();
+
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithAuthor("Server Report", user.GetAvatarUrl());
+            bool print = false;
+            foreach (RestAuditLogEntry audit in aLog[0])
+            {
+                if(audit.Action == ActionType.Ban)
+                {
+                    embed.WithColor(new Color(255, 0, 0));
+
+                }
+                else if (audit.Action == ActionType.MemberUpdated)
+                {
+                    string mod = $"**{audit.User.ToString()}**_({audit.User.Id})_";
+                    string reason = audit.Reason;
+                    MemberUpdateAuditLogData data = (MemberUpdateAuditLogData)audit.Data;
+                    string muted = "";
+                    string deaf = "";
+
+                    if (data.Before.Mute.HasValue)
+                    {
+                        if (!data.Before.Mute.Value && data.After.Mute.Value) muted = "muted ";
+                        else if (data.Before.Mute.Value && !data.After.Mute.Value) muted = "unmuted ";
+                        print = true;
+                    }
+                    if (data.Before.Deaf.HasValue)
+                    {
+                        if (!data.Before.Deaf.Value && data.After.Deaf.Value) deaf = "deafened ";
+                        else if (data.Before.Deaf.Value && !data.After.Deaf.Value) deaf = "undeafened ";
+                        print = true;
+                    }
+                    if (muted != "" && deaf != "") muted += "& ";
+                    string msg = $"**{data.Target}**_({data.Target.Id})_ was {muted}{deaf}by {mod}";
+                    embed.WithColor(new Color(250,150,0));
+                    embed.Description = msg;
+                    embed.WithFooter(audit.CreatedAt.ToLocalTime().ToString("dddd, dd MMMM yyyy hh:mm tt"));
+                }
+            } 
+            printConsole(embed.Description);
+            if (print) await sChannel.SendMessageAsync("", false, embed.Build());
+
+        }
+
+        private Task Client_UserUnbanned(SocketUser user, SocketGuild guild)
+        {
+            // Read audit log and tell who unbans another user
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Title = "Server Report";
+            embed.WithAuthor("Server Report", user.GetAvatarUrl());
             return Task.CompletedTask;
         }
 
-        private Task Client_UserVoiceStateUpdated(SocketUser arg1, SocketVoiceState arg2, SocketVoiceState arg3)
+        private Task Client_UserBanned(SocketUser user, SocketGuild guild)
         {
-            return Task.CompletedTask;
-        }
-
-        private Task Client_UserUnbanned(SocketUser arg1, SocketGuild arg2)
-        {
-            return Task.CompletedTask;
-        }
-
-        private Task Client_UserBanned(SocketUser arg1, SocketGuild arg2)
-        {
+            // Read audit log and tell who bans another user
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Title = "Server Report";
+            embed.WithAuthor("Server Report", user.GetAvatarUrl());
             return Task.CompletedTask;
         }
 
@@ -211,6 +295,14 @@ namespace byscuitBot
             if (user.Id != BotID)
                 await channel.SendMessageAsync(msg);   //Welcomes the new user
 
+
+            // Read audit log and tell who kicked another user if they did
+            /*
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Title = "Server Report";
+            embed.WithAuthor("Server Report", user.GetAvatarUrl());
+            */
+
             printConsole(username + " left " + user.Guild.Name);
             await checkStats(user.Guild); // Update user count
         }
@@ -227,6 +319,14 @@ namespace byscuitBot
             string msg = String.Format("**{0}** has joined the server!", username);  //Welcome Message
             if (user.Id != BotID)
                 await channel.SendMessageAsync(msg);   //Welcomes the new user
+
+
+            // Read audit log and tell who invited another user
+            /*
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.Title = "Server Report";
+            embed.WithAuthor("Server Report", user.GetAvatarUrl());
+            */
 
             printConsole(username + " joined " + user.Guild.Name);
             await checkStats(user.Guild); // Update user count
@@ -296,6 +396,14 @@ namespace byscuitBot
         {
             IReadOnlyCollection<SocketVoiceChannel> sChannels = guild.VoiceChannels;
             foreach (SocketVoiceChannel chan in sChannels)
+                if (chan.Name.ToLower().Contains(name.ToLower()))
+                    return chan; // return the correct channel
+            return null;// doesn't exist
+        }
+        public SocketTextChannel GetTextChannel(string name, SocketGuild guild)
+        {
+            IReadOnlyCollection<SocketTextChannel> sChannels = guild.TextChannels;
+            foreach (SocketTextChannel chan in sChannels)
                 if (chan.Name.ToLower().Contains(name.ToLower()))
                     return chan; // return the correct channel
             return null;// doesn't exist
