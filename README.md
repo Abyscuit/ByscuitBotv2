@@ -7,7 +7,7 @@ More stable and rewritten version of the Original ByscuitBot
 https://github.com/Abyscuit/ByscuitBotv2.git
 
 2) Restore NuGet Packgaes: <br/>
-CLI: `nuget restore ByscuitBotv2.sln`
+CLI: `nuget restore ByscuitBotv2.sln` <br/>
 Visual Studio: Tools > Options > NuGet Package Manager > Restore
 
 3) Build the solution
