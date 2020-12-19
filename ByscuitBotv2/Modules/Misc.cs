@@ -416,6 +416,7 @@ namespace ByscuitBotv2.Modules
         }
 
 
+        /*
         static HttpClientHandler hcHandle = new HttpClientHandler();
 
         [Command("CheckTwitch")]
@@ -447,6 +448,17 @@ namespace ByscuitBotv2.Modules
             }
 
         }
+        */
+
+
+        [Command("Ban")]
+        [Alias("gtfo", "bye")]
+        [Summary("Bans a user with an optional reason - Usage: {0}ban <user> <reason>")]
+        public async Task Ban(SocketGuildUser user, [Remainder]string text = "")
+        {
+            await Task.CompletedTask;
+        }
+
 
         #region Utility
         private string[] SplitMessage(string text, char delimiter)

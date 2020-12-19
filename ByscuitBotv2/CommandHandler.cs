@@ -99,7 +99,7 @@ namespace byscuitBot
             List<IReadOnlyCollection<RestAuditLogEntry>> aLog = await guild.GetAuditLogsAsync(1).ToListAsync();
 
             EmbedBuilder embed = new EmbedBuilder();
-            embed.WithAuthor("Server Report", user.GetAvatarUrl());
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
             bool print = false;
             foreach (RestAuditLogEntry audit in aLog[0])
             {
@@ -111,6 +111,7 @@ namespace byscuitBot
                 else if (audit.Action == ActionType.MemberUpdated)
                 {
                     string mod = $"**{audit.User.ToString()}**_({audit.User.Id})_";
+                    embed.WithAuthor("Server Report", audit.User.GetAvatarUrl());
                     string reason = audit.Reason;
                     MemberUpdateAuditLogData data = (MemberUpdateAuditLogData)audit.Data;
                     string muted = "";
@@ -132,7 +133,8 @@ namespace byscuitBot
                     string msg = $"**{data.Target}**_({data.Target.Id})_ was {muted}{deaf}by {mod}";
                     embed.WithColor(new Color(250,150,0));
                     embed.Description = msg;
-                    embed.WithFooter(audit.CreatedAt.ToLocalTime().ToString("dddd, dd MMMM yyyy hh:mm tt"));
+                    embed.WithTimestamp(audit.CreatedAt);
+                    embed.WithFooter(audit.Id.ToString());
                 }
             } 
             printConsole(embed.Description);
