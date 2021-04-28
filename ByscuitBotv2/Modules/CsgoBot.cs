@@ -13,11 +13,6 @@ namespace ByscuitBotv2.Modules
 {
     public class CsgoBot
     {
-        /*---- Account for fetching data ----
-            "Username": "♥Kimchi♥",
-            "Login": "ushdogw6barnes55192421",
-            "Password": "DHCPXKHRJYBE167"
-        */
 
         public SteamAccount JsonAccount;
 
