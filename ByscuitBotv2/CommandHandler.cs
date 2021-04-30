@@ -1,4 +1,5 @@
-﻿using ByscuitBotv2.Modules;
+﻿using ByscuitBotv2.Data;
+using ByscuitBotv2.Modules;
 using Discord;
 using Discord.Commands;
 using Discord.Rest;
@@ -22,6 +23,7 @@ namespace byscuitBot
         public static string prefix = "/";
         bool disconnected = false;
         string user = "";
+        public static SocketRole PremiumByscuitRole = null;
 
         /*
          * ------------------------------------------- *
@@ -46,6 +48,8 @@ namespace byscuitBot
             this.client.UserUnbanned += Client_UserUnbanned;
             this.client.UserVoiceStateUpdated += Client_UserVoiceStateUpdated;
             this.client.GuildMemberUpdated += Client_GuildMemberUpdated;
+            this.client.LatencyUpdated += Client_LatencyUpdated;
+            
 
             this.client.Connected += Client_Connected;
             this.client.Ready += Client_Ready;
@@ -53,47 +57,156 @@ namespace byscuitBot
             this.client.LoggedIn += Client_LoggedIn;
             this.client.Disconnected += Client_Disconnected;
         }
+        int postureTime = DateTime.Now.Hour / 2;
+        RestUserMessage sentMessage = null;
+        int count = 0;
+        int minedDay = DateTime.Now.Day;
+        public static List<SocketGuildUser> miners = new List<SocketGuildUser>();
+        private Task Client_LatencyUpdated(int arg1, int arg2)
+        {
+            
+            // Posture Check
+            SocketGuild Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
+            if (Byscuits == null) return Task.CompletedTask;
+            SocketGuildUser colin = Byscuits.GetUser(325858971925610497) as SocketGuildUser; // Been_Loadin
+            if (colin != null)
+            {
+                if (colin.VoiceChannel != null)
+                {
+                    printConsole("Posture Time: " + postureTime);
+                    if (colin.VoiceChannel.Users.Count > 2)
+                    {
+                        if (DateTime.Now.Hour / 2 != postureTime)
+                        {
+                            postureTime = DateTime.Now.Hour / 2;
+
+                            // Get all the members in the voice channel
+                            SocketVoiceChannel vChan = colin.VoiceChannel;
+                            string msg = "`POSTURE CHECK` \n";
+                            foreach (SocketGuildUser user in vChan.Users) { if (user.IsBot) continue; msg += " " + user.Mention; }
+
+                            sentMessage = colin.VoiceChannel.Guild.DefaultChannel.SendMessageAsync(msg).Result;
+                        }
+                    }
+                }
+            }
+            if (sentMessage != null) { if (count++ > 2) { sentMessage.DeleteAsync().GetAwaiter(); sentMessage = null; count = 0; } }
+            printConsole("MinedDay: " + minedDay);
+            // Mine byscuit coins
+            if (DateTime.Now.Day != minedDay)
+            {
+                printConsole("Mining coins");
+                List<SocketGuildUser> rewardAccounts = new List<SocketGuildUser>();
+                if (Accounts.accounts == null) return Task.CompletedTask;
+                Accounts.Sort();
+                // Add the top 10 leader board members
+                for (int i = 0; i < 10; i++)
+                {
+                    rewardAccounts.Add(Byscuits.GetUser(Accounts.accounts[i].DiscordID));
+                }
+                SocketRole booster = Byscuits.GetRole(765403412568735765);
+                foreach (SocketGuildUser user in booster.Members)
+                {
+                    if (rewardAccounts.Contains(user)) continue;
+                    rewardAccounts.Add(user);
+                }
+                SocketRole DaCrew = Byscuits.GetRole(246956426336010240);
+                foreach (SocketGuildUser user in DaCrew.Members)
+                {
+                    if (rewardAccounts.Contains(user)) continue;
+                    rewardAccounts.Add(user);
+                }
+                miners = rewardAccounts;
+                CreditsSystem.MineCoins(rewardAccounts);
+                minedDay = DateTime.Now.Day;
+            }
+            
+            return Task.CompletedTask;
+        }
 
         private Task Client_GuildMemberUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
         {
             printConsole($"GuildMember Updated | User 1: {arg1} | User 2: {arg2}");
+            if(arg1.Id == 215535755727077379) // FubiRock nickname check
+                if (arg2.Nickname != "FaggotRock") arg2.ModifyAsync(m => { m.Nickname = "FaggotRock"; }) ;
+            
             return Task.CompletedTask;
         }
         
 
         private Task Client_UserVoiceStateUpdated(SocketUser user, SocketVoiceState vState1, SocketVoiceState vState2)
         {
-            // Read audit log and tell who mutes/deafens another user
+            if (user.IsBot) return Task.CompletedTask;
+            // Get current guild
             SocketGuild guild = null;
             if (vState1.VoiceChannel != null) guild = vState1.VoiceChannel.Guild;
             else if (vState2.VoiceChannel != null) guild = vState2.VoiceChannel.Guild;
-            if(vState1.VoiceChannel != vState2.VoiceChannel)
-            {
-                return Task.CompletedTask;
-                if (vState2.VoiceChannel == null) return Task.CompletedTask;
-                /* Tells which user joined what voice channel
-                 * Good for voice spammers, bad for text spammers
-                    SocketTextChannel sChannel = GetTextChannel("security", guild);
-                    if (sChannel == null) return Task.CompletedTask;
 
-                    EmbedBuilder embed = new EmbedBuilder();
-                    embed.WithAuthor("Server Report", user.GetAvatarUrl());
-                    string msg = $"**{user}**_({user.Id})_ joined **{vState2.VoiceChannel.Name}** Voice Channel";
-                    embed.Description = msg;
-                    embed.WithFooter(DateTime.Now.ToLocalTime().ToString("dddd, dd MMMM yyyy hh:mm tt"));
-                    var nTask = Task.Run(async ()=> await sChannel.SendMessageAsync("", false, embed.Build()));
-                    nTask.RunSynchronously();
-                */
+            // Do a check if user is alone? But how to update if another user joins after without wasting resources?
+
+            if (vState1.VoiceChannel != vState2.VoiceChannel)
+            {
+                if (vState2.VoiceChannel != null)// If user joins a channel
+                {
+                    // Mute check
+                    if (!vState2.IsMuted && !vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, true, true);//Start counting if unmuted
+                    else if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false, true);// Stop counting if muted
+                    printConsole($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
+                    printConsole($"{user} Channel joined: {guild.Name}/{vState2.VoiceChannel}");
+                }
+                else if (vState2.VoiceChannel == null)// If user leaves the channel
+                {
+                    Accounts.UpdateUser(user.Id, false);// Stop the counting
+                    printConsole($"{user} Channel left: {guild.Name}/{vState1.VoiceChannel}");
+                }
             }
+            else// If the user deafens/mutes but doesnt change channels
+            {   // Mute check
+                if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false);// Stop counting if muted
+                else Accounts.UpdateUser(user.Id, true);//Start counting if unmuted
+                printConsole($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
+            }
+
             if (guild == null) return Task.CompletedTask;
-            var task = Task.Run(async () => await printAudit(guild, user));
-            
-            task.RunSynchronously();
+
+            if(vState2.VoiceChannel == guild.AFKChannel)
+            {
+                Accounts.UpdateUser(user.Id, false);//Stop counting if AFK
+                printConsole($"{user} is in AFK Channel");
+            }
+
+            // Update user roles
+            Accounts.Account account = Accounts.GetUser(user.Id);
+            List<Roles.Role> roles = Roles.CheckRoles(account.GetHours());
+            bool newRoles = false;
+            string strRoles = "";
+            SocketGuildUser sUser = user as SocketGuildUser;
+            for (int i = 0; i < roles.Count; i++)
+            {
+                foreach (SocketRole sRole in guild.Roles)
+                {
+                    if (sRole.Id == roles[i].RoleID)
+                    {
+                        if (!sUser.Roles.Contains(sRole))
+                        {
+                            newRoles = true;
+                            sUser.AddRoleAsync(sRole);
+                            if (!String.IsNullOrEmpty(strRoles)) strRoles = $"[{sRole.Name}]";
+                            else strRoles += $" [{sRole.Name}]";
+                            continue;
+                        }
+                    }
+                }
+            }
+            printConsole($"Roles: {strRoles}");
+            if (newRoles) guild.DefaultChannel.SendMessageAsync($"> **{user}**_({user.Id})_ has earned **{strRoles}**!");
+
             return Task.CompletedTask;
         }
        
         private async Task printAudit(SocketGuild guild, SocketUser user)
         {
+            if (user == null || guild == null) await Task.CompletedTask;
             SocketTextChannel sChannel = GetTextChannel("security", guild);
             if (sChannel == null) await Task.CompletedTask;
             List<IReadOnlyCollection<RestAuditLogEntry>> aLog = await guild.GetAuditLogsAsync(1).ToListAsync();
@@ -116,25 +229,29 @@ namespace byscuitBot
                     MemberUpdateAuditLogData data = (MemberUpdateAuditLogData)audit.Data;
                     string muted = "";
                     string deaf = "";
+                    if (data.Before.Mute.HasValue || data.After.Mute.HasValue || data.Before.Deaf.HasValue || data.After.Deaf.HasValue)
+                    {
+                        if (data.Before.Mute.Value == data.After.Mute.Value && data.Before.Deaf.Value == data.After.Deaf.Value) return;
 
-                    if (data.Before.Mute.HasValue)
-                    {
-                        if (!data.Before.Mute.Value && data.After.Mute.Value) muted = "muted ";
-                        else if (data.Before.Mute.Value && !data.After.Mute.Value) muted = "unmuted ";
-                        print = true;
+                        if (data.Before.Mute.Value != data.After.Mute.Value)
+                        {
+                            if (!data.Before.Mute.Value && data.After.Mute.Value) muted = "muted ";
+                            else if (data.Before.Mute.Value && !data.After.Mute.Value) muted = "unmuted ";
+                            print = true;
+                        }
+                        if (data.Before.Deaf.Value != data.After.Deaf.Value)
+                        {
+                            if (!data.Before.Deaf.Value && data.After.Deaf.Value) deaf = "deafened ";
+                            else if (data.Before.Deaf.Value && !data.After.Deaf.Value) deaf = "undeafened ";
+                            print = true;
+                        }
+                        if (muted != "" && deaf != "") muted += "& ";
+                        string msg = $"**{data.Target}**_({data.Target.Id})_ was {muted}{deaf}by {mod}";
+                        embed.WithColor(new Color(250, 150, 0));
+                        embed.Description = msg;
+                        embed.WithTimestamp(audit.CreatedAt);
+                        embed.WithFooter(audit.Id.ToString());
                     }
-                    if (data.Before.Deaf.HasValue)
-                    {
-                        if (!data.Before.Deaf.Value && data.After.Deaf.Value) deaf = "deafened ";
-                        else if (data.Before.Deaf.Value && !data.After.Deaf.Value) deaf = "undeafened ";
-                        print = true;
-                    }
-                    if (muted != "" && deaf != "") muted += "& ";
-                    string msg = $"**{data.Target}**_({data.Target.Id})_ was {muted}{deaf}by {mod}";
-                    embed.WithColor(new Color(250,150,0));
-                    embed.Description = msg;
-                    embed.WithTimestamp(audit.CreatedAt);
-                    embed.WithFooter(audit.Id.ToString());
                 }
             } 
             printConsole(embed.Description);
@@ -177,6 +294,12 @@ namespace byscuitBot
         {
             printConsole("Ready for inputs!");
             user = client.CurrentUser.ToString();
+            Accounts.Load();
+            Roles.Load();
+            SocketGuild Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
+            PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role
+            CreditsSystem.LoadAccounts(Byscuits);
+            BinanceWallet.Load();
             return Task.CompletedTask;
         }
 
@@ -250,34 +373,20 @@ namespace byscuitBot
                 {
                     string message = "```diff\n-Error when running this command\n-Reason: " + result.ErrorReason + "\n\n+View console for more info\n```";
 
-                    /// No More embeds for right now
-                    //  var embed = new EmbedBuilder();
-                    //  embed.WithTitle("Command Error");
-                    //  embed.WithDescription(message);
-                    //  embed.WithColor(255, 120, 120);
-                    //  embed.WithFooter("Developed by Abyscuit");
-                    //  embed.WithCurrentTimestamp();
+                      var embed = new EmbedBuilder();
+                    embed.WithTitle("Command Error");
+                    embed.WithDescription(result.ErrorReason);
+                    embed.WithColor(255, 0, 0);
+                    embed.WithFooter("View console for more info");
+                    embed.WithCurrentTimestamp();
 
-                    await context.Channel.SendMessageAsync(message);
+                    await context.Channel.SendMessageAsync(embed: embed.Build());
                     Console.WriteLine(result.ErrorReason);
                     Console.WriteLine(result.Error);
                 }
             }
             else // Non-Command messages
             {
-                /*//  Code just for mentions
-                IReadOnlyCollection<SocketUser> socketUsers = context.Message.MentionedUsers;
-                IEnumerator<SocketUser> users = socketUsers.GetEnumerator();
-                while (users.MoveNext())
-                {
-                    printConsole(context.User + " mentioned " + users.Current);
-                    if (users.Current.Id == 222866066961989632 && context.Guild.Id != 246718514214338560)
-                    {
-                        await context.Channel.SendMessageAsync("Fuck off yo! Message me in Da Byscuits server");
-                        break;
-                    }
-                }
-                */
             }
 
 
