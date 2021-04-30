@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 using SteamKit2;
 using System.Threading;
 using System.Net.Http;
+using ByscuitBotv2.Data;
 
 namespace ByscuitBotv2.Modules
 {
@@ -54,16 +55,24 @@ namespace ByscuitBotv2.Modules
                 //  }
 
                 /// Split the message at the threshold
-                //  if (x > 16)
-                //  {
-                //      userCmds += "|";
-                //      x = 0;
-                //  }
+                 if (x > 9)
+                 {
+                     userCmds += "|";
+                     x = 0;
+                 }
             }
 
+            int c = 0;
             foreach (string s in SplitMessage(userCmds, '|'))
+            {
                 if (!string.IsNullOrEmpty(s))
-                    await Context.Channel.SendMessageAsync(string.Format(title + "{1}" + s + "{2}", prefix, "```ml\n", "\n```"));
+                {
+                    string msg = "";
+                    if (c == 0) msg += title;
+                    await Context.Channel.SendMessageAsync(string.Format("{0} {1}" + s + "{2}", msg, "```ml\n", "\n```"));
+                    c++;
+                }
+            }
         }
 
         [Command("Clear")]
@@ -453,11 +462,269 @@ namespace ByscuitBotv2.Modules
 
         [Command("Ban")]
         [Alias("gtfo", "bye")]
+        [RequireUserPermission(GuildPermission.Administrator)]
         [Summary("Bans a user with an optional reason - Usage: {0}ban <user> <reason>")]
         public async Task Ban(SocketGuildUser user, [Remainder]string text = "")
         {
             await Task.CompletedTask;
         }
+
+
+        #region Check stats
+
+        [Command("Stats")]
+        [Alias("checkstats", "showstats")]
+        [Summary("Show the user stats - Usage: {0}user <@user(optional)>")]
+        public async Task Stats(SocketGuildUser user =null, [Remainder] string text = "")
+        {
+            //Display credits, join date
+            if (user == null) user = Context.User as SocketGuildUser;
+            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
+            Account account = CreditsSystem.GetAccount(user);
+            EmbedBuilder embed = new EmbedBuilder();
+            bool hasAccount = account != null;
+            if (!hasAccount)
+            {
+                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Byscuit Coins!");
+                return;
+            }
+            embed.WithAuthor($"{username} Stats", Context.Guild.IconUrl);
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
+            embed.WithColor(36, 122, 191);
+            embed.WithFields(new EmbedFieldBuilder[]{
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Joined Server").WithValue(user.JoinedAt.Value.LocalDateTime.ToString("MM/dd/yyyy")),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscuit Coins").WithValue(hasAccount ? account.credits : 0),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Mined").WithValue(hasAccount ? account.totalMined : 0),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Account Created").WithValue(user.CreatedAt.LocalDateTime.ToString("d")),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Booster").WithValue(user.Roles.Contains(CommandHandler.PremiumByscuitRole) ? "Yes" : "No"),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("BSC Enabled").WithValue(BinanceWallet.GetAccount(user) != null ? "Yes" : "No"), // Update when BSC is enabled on the bot
+            });
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+
+        #endregion
+
+
+        #region Time check/role
+        [Command("SetRole")]
+        [Alias("set", "role", "roleset")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        [Summary("Sets a role to be given when the user reaches the time threshold in voice chat - Usage: {0}setrole <NUM_HOURS> <@ROLE>")]
+        public async Task SetRole(int hours, SocketRole role)
+        {
+            if (hours <= 0)
+            {
+                await Context.Channel.SendMessageAsync("**Hours** cannot be less than or equal to zero!");
+                return;
+            }
+            if (role == null)
+            {
+                await Context.Channel.SendMessageAsync("**Role** cannot be NULL! Add the role by mentioning @role.");
+                return;
+            }
+            if(Roles.GetRole(role.Id) != null) Roles.RemoveRole(role);// If role exists remove it
+            Roles.AddRole(role, hours);// Then add the new one
+            await Context.Channel.SendMessageAsync($"> Role **{role.Name}** will be earned after {hours} hours in voice chat!");
+        }
+
+        [Command("RemoveRole")]
+        [Alias("remove", "delrole", "deleterole")]
+        [RequireUserPermission(GuildPermission.Administrator)]
+        [Summary("Remove a role from the voice chat role list - Usage: {0}removerole <@ROLE>")]
+        public async Task RemoveRole(SocketRole role = null)
+        {
+            if (role == null)
+            {
+                await Context.Channel.SendMessageAsync("> **Role** cannot be NULL! Add the role by mentioning @role.\n> Usage: setrole <NUM_HOURS> <@ROLE>");
+                return;
+            }
+
+            string msg = $"> Role **{role.Name}** has been removed!";
+            if (!Roles.RemoveRole(role)) msg = $"> Role **{role.Name}** is not set so it doesn't have to be removed.";
+            await Context.Channel.SendMessageAsync(msg);
+        }
+
+        [Command("ListRoles")]
+        [Alias("roles", "rolelist", "roleslist")]
+        [Summary("Lists the roles and the hours required for voice chat - Usage: {0}listroles")]
+        public async Task ListRoles(string str = "")
+        {
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithAuthor("Roles List", Context.Guild.IconUrl);
+            embed.WithColor(new Color(120, 120, 120));
+            string roleNames = "";
+            string hours = "";
+            List<Roles.Role> sortedRoles = new List<Roles.Role>();
+            List<Roles.Role> arrRoles = new List<Roles.Role>();
+            arrRoles.AddRange(Roles.roles);
+            Roles.Role largest = arrRoles[0];
+            for (int i = 0; i < Roles.roles.Count; i++)// Top 10 list
+            {
+                largest = arrRoles[0];
+                foreach (Roles.Role r in arrRoles)
+                {
+                    if (r.isSame(largest)) continue;// Skip if largest = current
+                    if (sortedRoles.Contains(r)) continue;// Skip if current is in the list already
+
+                    if (r.Hours > largest.Hours)// If current greater than the largest
+                        largest = r;
+                }
+                sortedRoles.Add(largest);
+                arrRoles.Remove(largest);
+            }
+
+            for (int i = sortedRoles.Count - 1; i >= 0; i--)
+            {
+                Roles.Role role = sortedRoles[i];
+                SocketRole sRole = Context.Guild.GetRole(role.RoleID);
+                roleNames += sRole.Name + "\n";
+                hours += role.Hours + "hrs\n";
+            }
+            embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(true).WithName("Roles").WithValue(roleNames),
+            new EmbedFieldBuilder().WithIsInline(true).WithName("Hours").WithValue(hours)});
+
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        [Command("CheckTime")]
+        [Alias("time", "usertime")]
+        [Summary("Check the amount of time a user has in voice chat - Usage: {0}CheckTime <@USER(optional)>")]
+        public async Task CheckTime(SocketGuildUser user = null)
+        {
+            if (user == null) user = Context.User as SocketGuildUser;
+            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
+            Accounts.Account account = Accounts.GetUser(user.Id);
+            EmbedBuilder embed = new EmbedBuilder();
+            if (account == null)
+            {
+                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no recorded time!");
+                return;
+            }
+            if (user.VoiceChannel == null) account.isCounting = false;
+            account.UpdateTime();
+            TimeSpan ts = account.TimeSpent;
+            Accounts.Sort();
+            string rank = "#"+(Accounts.GetUserIndex(user.Id) + 1);
+            string time = string.Format("{0}{1}{2}{3}", (ts.Days > 0) ? ts.Days.ToString() + "d, " : "",
+                (ts.Hours > 0) ? ts.Hours.ToString() + "hr, " : "", (ts.Minutes > 0) ? ts.Minutes.ToString() + "m, " : "", ts.Seconds.ToString() + "s");
+            embed.WithAuthor("Check User Time", Context.Guild.IconUrl);
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
+            embed.WithColor(36, 122, 191);
+            embed.WithFields(new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(true).WithName("Rank").WithValue(rank),
+                new EmbedFieldBuilder().WithIsInline(true).WithName(username).WithValue(time) });
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        [Command("Leaderboard")]
+        [Alias("topten", "toptime")]
+        [Summary("Show the leaderboard for time spent in voice chat - Usage: {0}Leaderboard")]
+        public async Task Leaderboard(string str = "")
+        {
+            string msg = "";
+            // Bruteforce compare (Might optimize later)
+            Accounts.Account largest = Accounts.accounts[0];
+            largest.UpdateTime();
+            List<SocketGuildUser> top = new List<SocketGuildUser>();
+            List<Accounts.Account> arrAcc = new List<Accounts.Account>();
+            arrAcc.AddRange(Accounts.accounts);
+            int count = ((arrAcc.Count >= 10) ? 10 : arrAcc.Count);
+            for (int i = 0; i < count; i++)// Top 10 list
+            {
+                largest = arrAcc[0];
+                SocketUser user = null;
+                foreach (Accounts.Account account in arrAcc)
+                {
+                    user = Context.Guild.GetUser(account.DiscordID);
+                    if (account.isSame(largest)) continue;// Skip if largest = current
+                    if (top.Contains(user)) continue;// Skip if current is in the list already
+
+                    account.UpdateTime();// Update the time to get the current time
+                    if (account.CompareTime(largest) > 0)// If current greater than the largest
+                        largest = account;
+                }
+                SocketGuildUser usr = Context.Guild.GetUser(largest.DiscordID);
+                if (usr != null) top.Add(usr);
+                else i--;
+                arrAcc.Remove(largest);
+            }
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithAuthor("Leaderboard", Context.Guild.IconUrl);
+            embed.WithColor(new Color(120,120,120));
+            string usernames = "";
+            string time = "";
+            for (int i = 0; i < top.Count; i++)
+            {
+                Accounts.Account account = Accounts.GetUser(top[i].Id);
+                TimeSpan ts = account.TimeSpent;
+                usernames += (i + 1) + ") " + (!string.IsNullOrEmpty(top[i].Nickname) ? top[i].Nickname : top[i].Username) + "#" + top[i].Discriminator + "\n";
+
+                time += string.Format("{0}{1}{2}{3}", (ts.Days > 0) ? ts.Days.ToString() + "d, " : "",
+                    (ts.Hours > 0) ? ts.Hours.ToString() + "hr, " : "", (ts.Minutes > 0) ? ts.Minutes.ToString() + "m, " : "", ts.Seconds.ToString() + "s\n");
+                if (string.IsNullOrEmpty(msg)) msg = time;
+                else msg += "\n" + time;
+            }
+            embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(true).WithName("User").WithValue(usernames),
+            new EmbedFieldBuilder().WithIsInline(true).WithName("Time Spent").WithValue(time)});
+
+            await Context.Channel.SendMessageAsync("",false,embed.Build());
+        }
+
+
+        [Command("AllTime")]
+        [Alias("allusertime", "usertime")]
+        [Summary("Show all users time spent in voice chat - Usage: {0}Alltime")]
+        public async Task AllUsersTime(string str = "")
+        {
+            string msg = "";
+            // Bruteforce compare (Might optimize later)
+            Accounts.Account largest = Accounts.accounts[0];
+            largest.UpdateTime();
+            List<SocketGuildUser> top = new List<SocketGuildUser>();
+            List<Accounts.Account> arrAcc = new List<Accounts.Account>();
+            arrAcc.AddRange(Accounts.accounts);
+            int count = ((arrAcc.Count >= 10) ? 10 : arrAcc.Count);
+            for (int i = 0; i < count; i++)// Top 10 list
+            {
+                largest = arrAcc[0];
+                SocketUser user = null;
+                foreach (Accounts.Account account in arrAcc)
+                {
+                    user = Context.Guild.GetUser(account.DiscordID);
+                    if (account.isSame(largest)) continue;// Skip if largest = current
+                    if (top.Contains(user)) continue;// Skip if current is in the list already
+
+                    account.UpdateTime();// Update the time to get the current time
+                    if (account.CompareTime(largest) > 0)// If current greater than the largest
+                        largest = account;
+                }
+                SocketGuildUser usr = Context.Guild.GetUser(largest.DiscordID);
+                if (usr != null) top.Add(usr);
+                else i--;
+                arrAcc.Remove(largest);
+            }
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithAuthor("Leaderboard", Context.Guild.IconUrl);
+            embed.WithColor(new Color(120, 120, 120));
+            string usernames = "";
+            string time = "";
+            for (int i = 0; i < top.Count; i++)
+            {
+                Accounts.Account account = Accounts.GetUser(top[i].Id);
+                TimeSpan ts = account.TimeSpent;
+                usernames += (i + 1) + ") " + (!string.IsNullOrEmpty(top[i].Nickname) ? top[i].Nickname : top[i].Username) + "#" + top[i].Discriminator + "\n";
+
+                time += string.Format("{0}{1}{2}{3}", (ts.Days > 0) ? ts.Days.ToString() + "d, " : "",
+                    (ts.Hours > 0) ? ts.Hours.ToString() + "hr, " : "", (ts.Minutes > 0) ? ts.Minutes.ToString() + "m, " : "", ts.Seconds.ToString() + "s\n");
+                if (string.IsNullOrEmpty(msg)) msg = time;
+                else msg += "\n" + time;
+            }
+            embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(true).WithName("User").WithValue(usernames),
+            new EmbedFieldBuilder().WithIsInline(true).WithName("Time Spent").WithValue(time)});
+
+            // await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+        #endregion
 
 
         #region Utility
