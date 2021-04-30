@@ -47,7 +47,7 @@ namespace ByscuitBotv2
             client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = Discord.LogSeverity.Debug, //change log level if you want
-                ConnectionTimeout = 30000, // 15 second timeout
+                ConnectionTimeout = 30000, // 30 second timeout
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 AlwaysDownloadUsers = true // Enable Server Member Intent in Discord API Settings
             });
