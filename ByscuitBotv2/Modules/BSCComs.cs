@@ -16,7 +16,7 @@ namespace ByscuitBotv2.Modules
     {
         static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
-        static string CURRENT_NET = TEST_NET;
+        static string CURRENT_NET = TEST_NET; // Set the network to work on here
         [Command("BNBRegister")]
         [Alias("bscregister", "bnbenable", "bscenable")]
         [Summary("Link your discord account to a Binance Smart Chain Wallet - Usage: {0}BNBRegister <password (optional)>")]
@@ -164,7 +164,7 @@ namespace ByscuitBotv2.Modules
                     new EmbedFieldBuilder().WithIsInline(false).WithName("Hash").WithValue($"`{receipt.TransactionHash}`"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue(amount),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue(await account.GetBalance()),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed)),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed)/ 100000000m),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Index").WithValue(receipt.TransactionIndex),
                 });
             }
@@ -214,7 +214,7 @@ namespace ByscuitBotv2.Modules
             bool minimumMet = amount >= minimumTip;
             if (!minimumMet)
             {
-                string msg = $"> Minimum amount you can withdraw is {minimumTip} BNB.";
+                string msg = $"> Minimum amount you can tip is {minimumTip} BNB.";
                 await Context.Channel.SendMessageAsync(msg);
                 return;
             }
@@ -226,7 +226,7 @@ namespace ByscuitBotv2.Modules
                 embed.WithFields(new EmbedFieldBuilder[] {
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue(amount),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue(await account.GetBalance()),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed))
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed) / 100000000m)
                 });
             }
             embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });

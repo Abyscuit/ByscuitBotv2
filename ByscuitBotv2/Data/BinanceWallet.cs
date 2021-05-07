@@ -12,6 +12,7 @@ using Discord.WebSocket;
 using System.Numerics;
 using NBitcoin;
 using Nethereum.RPC.Eth.DTOs;
+using System.Net;
 
 namespace ByscuitBotv2.Data
 {
@@ -76,7 +77,7 @@ namespace ByscuitBotv2.Data
                 return result;
             }
         }
-        static string[] wordsList = File.ReadAllLines("Resources/words.txt");
+        static string[] wordsList = null;
         static Wordlist words = Wordlist.LoadWordList(Language.English).Result;
         public static string GenerateWordList()
         {
@@ -154,6 +155,36 @@ namespace ByscuitBotv2.Data
                     }
                 }
                 if (!isDuplicate) { accounts.Add(account); Save(); }
+            }
+        }
+
+
+        public class BinanceAPI
+        {
+            static string url = "https://api.binance.com";
+            static string avgPrice = "/api/v3/avgPrice";
+
+            public static string GetETHPairing()
+            {
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + avgPrice+"?symbol=BNBETH");
+                request.ContentType = "application/json; charset=utf-8";
+                HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+                string data = "";
+                using (Stream responseStream = response.GetResponseStream())
+                {
+                    StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                    data = reader.ReadToEnd();
+                }
+
+                BinanceResponse r = JsonConvert.DeserializeObject<BinanceResponse>(data);
+                return r.price;
+            }
+
+            struct BinanceResponse
+            {
+                public int mins;
+                public string price;
             }
         }
     }
