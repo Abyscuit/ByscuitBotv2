@@ -322,7 +322,10 @@
     <Compile Include="Data\Accounts.cs" />
     <Compile Include="Data\BinanceWallet.cs" />
     <Compile Include="Data\Config.cs" />
+    <Compile Include="Data\EthereumWallet.cs" />
+    <Compile Include="Data\Nanopool.cs" />
     <Compile Include="Data\Roles.cs" />
+    <Compile Include="Data\SmartContract.cs" />
     <Compile Include="Data\Spam.cs" />
     <Compile Include="Modules\BSCComs.cs" />
     <Compile Include="Modules\ByscComs.cs" />
