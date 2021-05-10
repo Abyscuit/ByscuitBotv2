@@ -13,6 +13,7 @@ using System.Numerics;
 using NBitcoin;
 using Nethereum.RPC.Eth.DTOs;
 using System.Net;
+using Nethereum.Contracts;
 
 namespace ByscuitBotv2.Data
 {
