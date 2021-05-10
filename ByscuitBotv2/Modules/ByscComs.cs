@@ -1,4 +1,5 @@
 ﻿using byscuitBot;
+using ByscuitBotv2.Byscoin;
 using ByscuitBotv2.Data;
 using Discord;
 using Discord.Commands;
@@ -9,7 +10,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using static ByscuitBotv2.Byscoin.CashoutSystem;
 using static ByscuitBotv2.Data.SmartContract;
 
 namespace ByscuitBotv2.Modules
@@ -43,7 +46,7 @@ namespace ByscuitBotv2.Modules
 
         [Command("Miners")]
         [Alias("byscminers", "showminers")]
-        [Summary("Show the last miners and the total amount they mined - Usage: {0}Wallet")]
+        [Summary("Show the last miners and the total amount they mined - Usage: {0}Miners")]
         public async Task Miners([Remainder] string text = "")
         {
             // Check for who is boosting then display their data
@@ -206,7 +209,7 @@ namespace ByscuitBotv2.Modules
 
         [Command("ByscTip")]
         [Alias("byscointip", "byscoinsend")]
-        [Summary("Show the amount of Byscoin in your Binance Smart Chain wallet - Usage: {0}ByscTip")]
+        [Summary("Tip a user in Byscoin (Uses BNB for gas) - Usage: {0}ByscTip <@user>")]
         public async Task ByscTip(decimal amount = -1, SocketGuildUser receipient = null, [Remainder] string text = "")
         {
             decimal minimumTip = 0.05m;
@@ -284,6 +287,163 @@ namespace ByscuitBotv2.Modules
             embed.WithCurrentTimestamp();
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
+
+        public Thread cashoutThread;
+        [Command("Cashout")]
+        [Alias("byscoincashout", "bysccashout")]
+        [Summary("Cashout Byscoin for Ethereum - Usage: {0}Cashout <amount>")]
+        public async Task Cashout(decimal amount = -1, [Remainder] string text = "")
+        {
+            //await Context.Channel.SendMessageAsync("> This command is still under development"); return;
+            if (cashoutThread != null)
+            {
+                if (cashoutThread.ThreadState == ThreadState.Running)
+                {
+                    await Context.Channel.SendMessageAsync("> Wait for the previous cashout to finish");
+                    return;
+                }
+            }
+            cashoutThread = new Thread(new ThreadStart(() =>
+            {
+                // 100000 for debug tests
+                decimal minimum = 100000; // 1 million Byscoins ($3)
+
+                var user = Context.User as SocketGuildUser;
+                string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
+                if (amount == -1)
+                {
+                    string msg = "> Cashout command called incorrectly!" +
+                        "\n> Usage: **Cashout** *<amount>*";
+                    Context.Channel.SendMessageAsync(msg);
+                    cashoutThread.Abort();
+                    return;
+                }
+                BinanceWallet.WalletAccount account = BinanceWallet.GetAccount(user);
+                if (account == null)
+                {
+                    Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Binance Wallet linked!" +
+                        "\n> Use the **BNBRegister** command to link a wallet.");
+                    cashoutThread.Abort();
+                    return;
+                }
+
+                Web3 web3 = new Web3(account.GetAccount(), CURRENT_NET);
+
+                var transferHandler = web3.Eth.GetContractTransactionHandler<TransferFunction>();
+                string ownerAddress = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
+                var transfer = new TransferFunction()
+                {
+                    To = ownerAddress,
+                    TokenAmount = Web3.Convert.ToWei(amount),
+                };
+                var transactionReceipt = transferHandler.SendRequestAndWaitForReceiptAsync(CONTRACT_ADDRESS, transfer).Result;
+
+
+                var balanceOfFunctionMessage = new BalanceOfFunction()
+                {
+                    Owner = account.Address,
+                };
+
+                var balanceHandler = web3.Eth.GetContractQueryHandler<BalanceOfFunction>();
+                var balance = balanceHandler.QueryAsync<BigInteger>(CONTRACT_ADDRESS, balanceOfFunctionMessage).Result;
+
+                double ETHUSDValue = Nanopool.GetPrices().price_usd;
+                decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+                decimal balVal = Web3.Convert.FromWei(balance);
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.WithAuthor("Byscoin Cashout", Context.Guild.IconUrl);
+                embed.WithThumbnailUrl(user.GetAvatarUrl());
+                embed.WithColor(36, 122, 191);
+                bool minimumMet = amount >= minimum;
+                if (!minimumMet)
+                {
+                    string msg = $"> Minimum amount you can cashout is {minimum} BYSC.";
+                    Context.Channel.SendMessageAsync(msg);
+                    return;
+                }
+                decimal amountEth = amount / 1000000000; // amount divided by 1 bil to get ether value
+                uint claimID = (uint)CashoutSystem.cashoutClaims.Count;
+                CashoutClaim claim = new CashoutClaim()
+                {
+                    ClaimID = claimID,
+                    BYSCAmount = amount,
+                    ETHAmount = amountEth,
+                    DiscordID = user.Id,
+                    TransactionHash = transactionReceipt.TransactionHash,
+                    Username = username,
+                    State = CashoutState.Pending,
+                    ETHTransactionHash = ""
+                };
+                cashoutClaims.Add(claim);
+                Save();
+                    embed.Description = $"`Cashout claim is now pending manual review`";
+                    embed.WithFields(new EmbedFieldBuilder[] {
+                    new EmbedFieldBuilder().WithIsInline(false).WithName("Transaction Hash").WithValue($"{transactionReceipt.TransactionHash}"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{amount:N8} (${amount * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount in ETH").WithValue($"{amountEth:N8} (${amountEth * (decimal)ETHUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N8} (${balVal * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue((decimal)(transactionReceipt.GasUsed.Value) / 100000000m + " BNB")
+                });
+                embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + transactionReceipt.BlockNumber });
+                embed.WithCurrentTimestamp();
+                Context.Channel.SendMessageAsync("", false, embed.Build());
+            }));
+            cashoutThread.Start(); // Start work on different thread (risky!!!!) (CHECK IF THREAD IS ACTIVE!!!)
+            await Context.Channel.SendMessageAsync("> Cashout claim sent waiting for transaction...");
+        }
+
+        [Command("FinishCashout")]
+        [Alias("completecashout", "completeclaim")]
+        [Summary("Complete cashout claim - Usage: {0}FinishCashout <claimID> <ETHTransactionHash>")]
+        [RequireOwner()]
+        public async Task FinishCashout(uint claimID, string status = "REJECTED", string ETHTransactionHash = "")
+        {
+            await Context.Message.DeleteAsync();
+            if (status != "REJECTED") status = "COMPLETED";
+            CashoutClaim Claim = null;
+            foreach (CashoutClaim claim in cashoutClaims)
+            {// Adds option to go back to claim ID if not removed
+                if (claim.ClaimID == claimID)
+                {
+                    claim.State = CashoutState.Completed;
+                    claim.ETHTransactionHash = ETHTransactionHash;
+                    Claim = claim;
+                    break;
+                }
+            }
+            CashoutSystem.Save(); // Save cashout claims
+            SocketGuildUser user = Context.Guild.GetUser(Claim.DiscordID);
+
+            double ETHUSDValue = Nanopool.GetPrices().price_usd;
+            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.WithAuthor("Byscoin Cashout", Context.Guild.IconUrl);
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
+            embed.WithColor(36, 122, 191);
+            embed.Description = $"`Your cashout claim was {status}`";
+            if (status != "REJECTED")
+            {
+                embed.WithFields(new EmbedFieldBuilder[] {
+                    new EmbedFieldBuilder().WithIsInline(false).WithName("ETH Transaction Hash").WithValue($"{Claim.ETHTransactionHash}"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{Claim.BYSCAmount:N8} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount in ETH").WithValue($"{Claim.ETHAmount:N8} (${Claim.ETHAmount * (decimal)ETHUSDValue:N2})")
+                });
+            }
+            else
+            {
+                embed.WithFields(new EmbedFieldBuilder[] {
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Bycoin Amount").WithValue($"{Claim.BYSCAmount:N8} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})")
+                });
+
+            }
+            embed.WithCurrentTimestamp();
+            await Utility.DirectMessage(user, embed: embed.Build());
+        }
+
         #endregion
     }
 }
