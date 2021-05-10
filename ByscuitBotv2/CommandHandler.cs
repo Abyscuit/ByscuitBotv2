@@ -1,4 +1,5 @@
-﻿using ByscuitBotv2.Data;
+﻿using ByscuitBotv2.Byscoin;
+using ByscuitBotv2.Data;
 using ByscuitBotv2.Modules;
 using Discord;
 using Discord.Commands;
@@ -71,7 +72,7 @@ namespace byscuitBot
             SocketGuildUser colin = Byscuits.GetUser(325858971925610497) as SocketGuildUser; // Been_Loadin
             if (colin != null)
             {
-                if (colin.VoiceChannel != null)
+                if (colin.VoiceChannel != null && colin.VoiceChannel != Byscuits.AFKChannel)
                 {
                     printConsole("Posture Time: " + postureTime);
                     if (colin.VoiceChannel.Users.Count > 2)
@@ -90,6 +91,7 @@ namespace byscuitBot
                     }
                 }
             }
+            // Delete posture check message
             if (sentMessage != null) { if (count++ > 2) { sentMessage.DeleteAsync().GetAwaiter(); sentMessage = null; count = 0; } }
             printConsole("MinedDay: " + minedDay);
             // Mine byscuit coins
@@ -142,7 +144,7 @@ namespace byscuitBot
             if (vState1.VoiceChannel != null) guild = vState1.VoiceChannel.Guild;
             else if (vState2.VoiceChannel != null) guild = vState2.VoiceChannel.Guild;
 
-            // Do a check if user is alone? But how to update if another user joins after without wasting resources?
+            // Should I check if the user is alone?
 
             if (vState1.VoiceChannel != vState2.VoiceChannel)
             {
@@ -300,6 +302,7 @@ namespace byscuitBot
             PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
+            CashoutSystem.Load();
             return Task.CompletedTask;
         }
 
