@@ -317,6 +317,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Byscoin\CashoutSystem.cs" />
     <Compile Include="CommandHandler.cs" />
     <Compile Include="Data\Account.cs" />
     <Compile Include="Data\Accounts.cs" />
@@ -327,6 +328,9 @@
     <Compile Include="Data\Roles.cs" />
     <Compile Include="Data\SmartContract.cs" />
     <Compile Include="Data\Spam.cs" />
+    <Compile Include="Lotto\LottoCommands.cs" />
+    <Compile Include="Lotto\LottoEntry.cs" />
+    <Compile Include="Lotto\LottoSystem.cs" />
     <Compile Include="Modules\BSCComs.cs" />
     <Compile Include="Modules\ByscComs.cs" />
     <Compile Include="Modules\Misc.cs" />

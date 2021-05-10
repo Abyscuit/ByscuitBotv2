@@ -27,13 +27,13 @@ namespace ByscuitBotv2.Modules
         {
             string title = "Use the '" + CommandHandler.prefix + "' prefix to send a command.\n";
             List<CommandInfo> cmds = CommandHandler.GetCommands();
-            string userCmds = "";
-            int x = 0;
+            string userCmds = ""; // Variable to store user commands
+            int x = 0; // Variable for how many cmds are displayed
             SocketGuildUser user = Context.User as SocketGuildUser;
             foreach (CommandInfo cmd in cmds)
             {
-                if (cmd.Name.ToLower() == "help") continue;
-
+                if (cmd.Name.ToLower() == "help") continue; // Skip if the cmd is help
+                if (cmd.Name.ToLower().Contains("finishcashout") || cmd.Name.ToLower().Contains("payout")) continue;
                 /// Conditionals for showing commands based
                 /// on User privileges
                 
@@ -46,11 +46,11 @@ namespace ByscuitBotv2.Modules
                 //  }
                 //  else
                 //  {
-                        userCmds += cmd.Name + " ";
-                        foreach(string alias in cmd.Aliases)
-                        userCmds += "[" + alias + "] ";
-                        if (!string.IsNullOrEmpty(cmd.Summary))
-                            userCmds += "\n\"" + cmd.Summary + "\"\n\n";
+                        userCmds += cmd.Name + " "; // Add cmd name first
+                        foreach(string alias in cmd.Aliases) // Then add every alias the cmd has
+                            userCmds += "[" + alias + "] ";
+                        if (!string.IsNullOrEmpty(cmd.Summary)) // Add the summary of the cmd
+                            userCmds += "\n\"" + string.Format(cmd.Summary, "/") + "\"\n\n";
                         x++;// Add 1 to the command split counter
                 //  }
 
@@ -111,7 +111,7 @@ namespace ByscuitBotv2.Modules
             }
 
             await Context.Channel.SendMessageAsync($"Grabbing {num} messages from inbox...");
-            await Utility.DirectMessage(Context, $"Fetched {num} of messages from {username}@byscuitbros.site!");
+            await Utility.DirectMessage(Context.User as SocketGuildUser, $"Fetched {num} of messages from {username}@byscuitbros.site!");
         }
 
         static int taCount = 0;// Variable to keep track of throwaway
@@ -133,7 +133,7 @@ namespace ByscuitBotv2.Modules
                 SteamAccount acct = steamAccounts[taCount++];
                 while (acct.CooldownEnd.CompareTo(DateTime.Now) > 0) { acct = steamAccounts[taCount++]; }
                 string msg = string.Format("```ml\n{0} - \"Level {1}\"\nUSERNAME - '{2}'\nPASSWORD - '{3}'\n```", acct.Username, acct.Level, acct.Login, acct.Password);
-                await Utility.DirectMessage(Context, msg);
+                await Utility.DirectMessage(Context.User as SocketGuildUser, msg);
             }
             else if (text == "list")
             {
@@ -209,7 +209,7 @@ namespace ByscuitBotv2.Modules
                 while (acct.Level == 1) { acct = steamAccounts[taCount++]; if (taCount >= steamAccounts.Count - 1) break; }
                 string msg = string.Format("```ml\n{0} - \"Level {1}\"\nUSERNAME - '{2}'\nPASSWORD - '{3}'\n```", acct.Username, acct.Level, acct.Login, acct.Password);
                 await Context.Channel.SendMessageAsync("Sending login info...");
-                await Utility.DirectMessage(Context, msg);
+                await Utility.DirectMessage(Context.User as SocketGuildUser, msg);
             }
             else if (text == "level 1" || text == "new")
             {
@@ -218,7 +218,7 @@ namespace ByscuitBotv2.Modules
                 while(acct.Level != 1) { acct = steamAccounts[taCount++]; if (taCount >= steamAccounts.Count - 1) break; }
                 string msg = string.Format("```ml\n{0} - \"Level {1}\"\nUSERNAME - '{2}'\nPASSWORD - '{3}'\n```", acct.Username, acct.Level, acct.Login, acct.Password);
                 await Context.Channel.SendMessageAsync("Sending login info...");
-                await Utility.DirectMessage(Context, msg);
+                await Utility.DirectMessage(Context.User as SocketGuildUser, msg);
             }
             else if (text == "restart")
             {

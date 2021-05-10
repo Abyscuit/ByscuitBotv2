@@ -1,4 +1,6 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,15 +23,26 @@ namespace ByscuitBotv2.Modules
         }
 
 
-        public static async Task DirectMessage(SocketCommandContext Context ,string msg = "")
+        public static async Task DirectMessage(SocketGuildUser user, string msg = "")
         {
             // Get or create the Direct channel then send message
-            var x = await Context.User.GetOrCreateDMChannelAsync();
+            var x = await user.GetOrCreateDMChannelAsync();
             await x.SendMessageAsync(msg);
 
             // Print to console that we sent the message
-            string username = Context.User.Username + "#" + Context.User.Discriminator;
+            string username = user.Username + "#" + user.Discriminator;
             string text = $"{username} was sent a private message";
+            printConsole(text);
+        }
+        public static async Task DirectMessage(SocketGuildUser user,string msg = "", Embed embed = null)
+        {
+            // Get or create the Direct channel then send message
+            var x = await user.GetOrCreateDMChannelAsync();
+            await x.SendMessageAsync(msg, false, embed);
+
+            // Print to console that we sent the message
+            string username = user.Username + "#" + user.Discriminator;
+            string text = $"{username} was sent a private embedded message";
             printConsole(text);
         }
 
