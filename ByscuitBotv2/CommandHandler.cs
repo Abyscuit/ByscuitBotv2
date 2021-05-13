@@ -1,5 +1,6 @@
 ﻿using ByscuitBotv2.Byscoin;
 using ByscuitBotv2.Data;
+using ByscuitBotv2.Lotto;
 using ByscuitBotv2.Modules;
 using Discord;
 using Discord.Commands;
@@ -303,6 +304,7 @@ namespace byscuitBot
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
             CashoutSystem.Load();
+            LottoSystem.Load();
             return Task.CompletedTask;
         }
 

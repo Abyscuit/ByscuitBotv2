@@ -8,14 +8,13 @@ using Discord.Net;
 using Discord;
 using Discord.WebSocket;
 using System.Threading;
+using ByscuitBotv2.Data;
 
 namespace ByscuitBotv2.Lotto
 {
     public class LottoCommands : ModuleBase<SocketCommandContext>
     {
-        public static List<LottoEntry> LOTTO_ENTRIES = new List<LottoEntry>();
-        public static int LOTTO_PRICE = 100;
-        public static decimal LOTTO_POT = 1000000; // Initial Pot winnings
+        // try to figure out how to do internal transfers for gasless tips
         Thread bgThread; // Thread for background tasking
         [Command("Entry")]
         [Alias("lottoentry", "lotto")]
@@ -35,6 +34,8 @@ namespace ByscuitBotv2.Lotto
             }
             bgThread = new Thread(new ThreadStart(() =>
             {
+                SocketGuildUser user = Context.User as SocketGuildUser;
+                string username = (string.IsNullOrEmpty(user.Nickname) ? user.Username : user.Nickname) + "#" + user.Discriminator;
                 LottoEntry entry = new LottoEntry();
                 entry.numbers = new int[] {
                     int.Parse(numArr[0]),
@@ -43,8 +44,20 @@ namespace ByscuitBotv2.Lotto
                     int.Parse(numArr[3]),
                 };
                 entry.discordID = Context.User.Id;
-                Thread.Sleep(2000);
-                Context.Channel.SendMessageAsync("Completed");
+                double ETHUSDValue = Nanopool.GetPrices().price_usd;
+                decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+                LottoSystem.AddEntry(entry);
+                int userEntries = LottoSystem.GetUserEntries(user.Id);
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.WithAuthor("Byscoin Lottery Entry", Context.Guild.IconUrl);
+                embed.WithColor(36, 122, 191);
+                embed.Description = $"`{username} entry has been submitted`";
+                embed.WithFields(new EmbedFieldBuilder[]{
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Total POT").WithValue($"{LottoSystem.LOTTO_POT} BYSC (${LottoSystem.LOTTO_POT * BYSCUSDValue:N2})"),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Entries").WithValue($"{userEntries}"),
+            });
+                embed.WithFooter(new EmbedFooterBuilder() { Text = $"Total Entries: {LottoSystem.LOTTO_ENTRIES.Count}" });
+                Context.Channel.SendMessageAsync(embed: embed.Build());
             }));
             bgThread.Start();
             await Task.CompletedTask;
