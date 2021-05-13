@@ -4,6 +4,7 @@ using ByscuitBotv2.Data;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using System;
 using System.Collections.Generic;
@@ -157,7 +158,10 @@ namespace ByscuitBotv2.Modules
         #endregion
 
         #region Byscoin
-        public static string CONTRACT_ADDRESS = "0x256639f740364144851cc206063221b2e122337c";
+        // All Discord Byscoin should be testnet to save money
+        // Cashout to real BNB/ETH on mainnet
+        public static string CONTRACT_ADDRESS = "0xDaDa9E1cCB78Dbf2586E29B4648b8cA7e5A09a27";
+        public static string POOL_ADDRESS = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
         static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
         static string CURRENT_NET = TEST_NET; // Set the network to work on here
@@ -212,6 +216,8 @@ namespace ByscuitBotv2.Modules
         [Summary("Tip a user in Byscoin (Uses BNB for gas) - Usage: {0}ByscTip <@user>")]
         public async Task ByscTip(decimal amount = -1, SocketGuildUser receipient = null, [Remainder] string text = "")
         {
+            // approve the transaction with pool address as spender from tipping account with amount as allowance
+            // send the transaction with the pool address account
             decimal minimumTip = 0.05m;
             var user = Context.User as SocketGuildUser;
             string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
@@ -280,7 +286,7 @@ namespace ByscuitBotv2.Modules
                 embed.WithFields(new EmbedFieldBuilder[] {
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue($"{amount:N8} (${amount * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N8} (${balVal * (decimal)BYSCUSDValue:N2})"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue((decimal)(transactionReceipt.GasUsed.Value) / 100000000m + " BNB")
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(transactionReceipt.GasUsed.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei) + " BNB")
                 });
             }
             embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + transactionReceipt.BlockNumber });
@@ -289,10 +295,14 @@ namespace ByscuitBotv2.Modules
         }
 
         public Thread cashoutThread;
+        // Created a list for threads so multiple people can cashout
+        // at the same time. Need to check for resources used in the running
+        // threads as this could lead to file or memory corruption
+        public static List<Thread> CASHOUT_THREADS = new List<Thread>(); // Use with caution
         [Command("Cashout")]
         [Alias("byscoincashout", "bysccashout")]
-        [Summary("Cashout Byscoin for Ethereum - Usage: {0}Cashout <amount>")]
-        public async Task Cashout(decimal amount = -1, [Remainder] string text = "")
+        [Summary("Cashout Byscoin for Ethereum - Usage: {0}Cashout <amount> <address>")]
+        public async Task Cashout(decimal amount = -1, string address = "", [Remainder] string text = "")
         {
             //await Context.Channel.SendMessageAsync("> This command is still under development"); return;
             if (cashoutThread != null)
@@ -302,6 +312,13 @@ namespace ByscuitBotv2.Modules
                     await Context.Channel.SendMessageAsync("> Wait for the previous cashout to finish");
                     return;
                 }
+            }
+            Nethereum.Util.AddressUtil addressUtil = new Nethereum.Util.AddressUtil(); 
+            if(!addressUtil.IsValidAddressLength(address) || !addressUtil.IsValidEthereumAddressHexFormat(address) ||
+                addressUtil.IsAnEmptyAddress(address))
+            {
+                await Context.Channel.SendMessageAsync("> Ethereum Address is not valid!");
+                return;
             }
             cashoutThread = new Thread(new ThreadStart(() =>
             {
@@ -313,7 +330,7 @@ namespace ByscuitBotv2.Modules
                 if (amount == -1)
                 {
                     string msg = "> Cashout command called incorrectly!" +
-                        "\n> Usage: **Cashout** *<amount>*";
+                        "\n> Usage: **Cashout** *<amount>* *<address>*";
                     Context.Channel.SendMessageAsync(msg);
                     cashoutThread.Abort();
                     return;
@@ -330,13 +347,22 @@ namespace ByscuitBotv2.Modules
                 Web3 web3 = new Web3(account.GetAccount(), CURRENT_NET);
 
                 var transferHandler = web3.Eth.GetContractTransactionHandler<TransferFunction>();
-                string ownerAddress = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
+                string ownerAddress = "0xA10106F786610D0CF05796b5F13aF7724A1faC34"; // receive address for byscoin pool
                 var transfer = new TransferFunction()
                 {
                     To = ownerAddress,
                     TokenAmount = Web3.Convert.ToWei(amount),
                 };
-                var transactionReceipt = transferHandler.SendRequestAndWaitForReceiptAsync(CONTRACT_ADDRESS, transfer).Result;
+                TransactionReceipt transactionReceipt = null;
+                try
+                {
+                    transactionReceipt = transferHandler.SendRequestAndWaitForReceiptAsync(CONTRACT_ADDRESS, transfer).Result;
+                }
+                catch(Exception ex)
+                {
+                    Context.Channel.SendMessageAsync($"> {ex.InnerException.Message}");
+                    return;
+                }
 
 
                 var balanceOfFunctionMessage = new BalanceOfFunction()
@@ -372,7 +398,8 @@ namespace ByscuitBotv2.Modules
                     TransactionHash = transactionReceipt.TransactionHash,
                     Username = username,
                     State = CashoutState.Pending,
-                    ETHTransactionHash = ""
+                    ETHTransactionHash = "",
+                    ETHAddress = address
                 };
                 cashoutClaims.Add(claim);
                 Save();
@@ -383,7 +410,7 @@ namespace ByscuitBotv2.Modules
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{amount:N8} (${amount * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount in ETH").WithValue($"{amountEth:N8} (${amountEth * (decimal)ETHUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N8} (${balVal * (decimal)BYSCUSDValue:N2})"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue((decimal)(transactionReceipt.GasUsed.Value) / 100000000m + " BNB")
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue((decimal)Web3.Convert.FromWei(transactionReceipt.GasUsed.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei)+ " BNB")
                 });
                 embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + transactionReceipt.BlockNumber });
                 embed.WithCurrentTimestamp();
@@ -395,12 +422,12 @@ namespace ByscuitBotv2.Modules
 
         [Command("FinishCashout")]
         [Alias("completecashout", "completeclaim")]
-        [Summary("Complete cashout claim - Usage: {0}FinishCashout <claimID> <ETHTransactionHash>")]
+        [Summary("Complete cashout claim - Usage: {0}FinishCashout <claimID> <status> <ETHTransactionHash>")]
         [RequireOwner()]
-        public async Task FinishCashout(uint claimID, string status = "REJECTED", string ETHTransactionHash = "")
+        public async Task FinishCashout(uint claimID, string status = "CANCELLED", string ETHTransactionHash = "")
         {
             await Context.Message.DeleteAsync();
-            if (status != "REJECTED") status = "COMPLETED";
+            if (status.ToUpper() != "REJECTED" || status.ToUpper() != "CANCELLED") status = "COMPLETED";
             CashoutClaim Claim = null;
             foreach (CashoutClaim claim in cashoutClaims)
             {// Adds option to go back to claim ID if not removed
@@ -423,10 +450,11 @@ namespace ByscuitBotv2.Modules
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.Description = $"`Your cashout claim was {status}`";
-            if (status != "REJECTED")
+            if (status.ToUpper() != "REJECTED" || status.ToUpper() != "CANCELLED")
             {
                 embed.WithFields(new EmbedFieldBuilder[] {
                     new EmbedFieldBuilder().WithIsInline(false).WithName("ETH Transaction Hash").WithValue($"{Claim.ETHTransactionHash}"),
+                    new EmbedFieldBuilder().WithIsInline(false).WithName("ETH Address").WithValue($"{Claim.ETHAddress}"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{Claim.BYSCAmount:N8} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount in ETH").WithValue($"{Claim.ETHAmount:N8} (${Claim.ETHAmount * (decimal)ETHUSDValue:N2})")
