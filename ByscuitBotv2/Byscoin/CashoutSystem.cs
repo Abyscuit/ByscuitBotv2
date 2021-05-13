@@ -21,12 +21,14 @@ namespace ByscuitBotv2.Byscoin
             public string TransactionHash;
             public CashoutState State;
             public string ETHTransactionHash;
+            public string ETHAddress;
         }
         public enum CashoutState
         {
             Pending,
             Completed,
-            Declined
+            Declined,
+            Cancelled
         }
         static string path = "Resources/";
         static string file = "CashoutClaims.json";
@@ -52,7 +54,6 @@ namespace ByscuitBotv2.Byscoin
                 string contents = File.ReadAllText(fullpath);
                 cashoutClaims = JsonConvert.DeserializeObject<List<CashoutClaim>>(contents);
             }
-
         }
     }
 }
