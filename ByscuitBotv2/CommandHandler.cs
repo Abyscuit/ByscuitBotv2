@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace byscuitBot
@@ -26,6 +27,7 @@ namespace byscuitBot
         bool disconnected = false;
         string user = "";
         public static SocketRole PremiumByscuitRole = null;
+        Random random = new Random();
 
         /*
          * ------------------------------------------- *
@@ -62,8 +64,10 @@ namespace byscuitBot
         int postureTime = DateTime.Now.Hour / 2;
         RestUserMessage sentMessage = null;
         int count = 0;
-        int minedDay = DateTime.Now.Day;
-        public static List<SocketGuildUser> miners = new List<SocketGuildUser>();
+        int lottoDay = DateTime.Now.Day;
+        public static List<SocketGuildUser> fullMatch = new List<SocketGuildUser>();
+        public static List<SocketGuildUser> threeMatch = new List<SocketGuildUser>();
+        public static List<SocketGuildUser> twoMatch = new List<SocketGuildUser>();
         private Task Client_LatencyUpdated(int arg1, int arg2)
         {
             
@@ -94,34 +98,99 @@ namespace byscuitBot
             }
             // Delete posture check message
             if (sentMessage != null) { if (count++ > 2) { sentMessage.DeleteAsync().GetAwaiter(); sentMessage = null; count = 0; } }
-            printConsole("MinedDay: " + minedDay);
-            // Mine byscuit coins
-            if (DateTime.Now.Day != minedDay)
+            printConsole("LottoDay: " + lottoDay);
+            // Do byscoin Lotto
+            if (DateTime.Now.Day != lottoDay)
             {
-                printConsole("Mining coins");
-                List<SocketGuildUser> rewardAccounts = new List<SocketGuildUser>();
+                // Generate 4 random numbers but randomize random
+                random.Next(); random.Next(); random.Next(); random.Next();
+                int[] winningNums = { random.Next(0, 9), random.Next(0, 9), random.Next(0, 9), random.Next(0, 9) };
+                printConsole("Doing Byscoin Lotto");
                 if (Accounts.accounts == null) return Task.CompletedTask;
                 Accounts.Sort();
                 // Add the top 10 leader board members
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < LottoSystem.LOTTO_ENTRIES.Count; i++)
                 {
-                    rewardAccounts.Add(Byscuits.GetUser(Accounts.accounts[i].DiscordID));
+                    LottoEntry entry = LottoSystem.LOTTO_ENTRIES[i];
+                    int matchingNums = 0;
+                    for (int j = 0; j < winningNums.Length; j++)
+                        if (entry.numbers[j] == winningNums[j]) matchingNums++;
+                    SocketGuildUser user = Byscuits.GetUser(entry.discordID);
+                    if (matchingNums == 2) { if (!twoMatch.Contains(user)) twoMatch.Add(user); }
+                    else if (matchingNums == 3) { if (!threeMatch.Contains(user)) threeMatch.Add(user); }
+                    else if (matchingNums == 4) { if (!fullMatch.Contains(user)) fullMatch.Add(user); }
                 }
-                SocketRole booster = Byscuits.GetRole(765403412568735765);
-                foreach (SocketGuildUser user in booster.Members)
+                decimal TotalPot = LottoSystem.LOTTO_POT;
+                if (twoMatch.Count > 0)
                 {
-                    if (rewardAccounts.Contains(user)) continue;
-                    rewardAccounts.Add(user);
+                    // Give 10% pot / winners
+                    decimal winnings = (LottoSystem.LOTTO_POT / 10) / twoMatch.Count;
+                    LottoSystem.LOTTO_POT -= TotalPot / 10;
+                    for(int i = 0; i < twoMatch.Count; i++) {
+                        Account acc = CreditsSystem.GetAccount(twoMatch[i]);
+                        acc.credits += (double)winnings;
+                    }
                 }
-                SocketRole DaCrew = Byscuits.GetRole(246956426336010240);
-                foreach (SocketGuildUser user in DaCrew.Members)
+                if (threeMatch.Count > 0)
                 {
-                    if (rewardAccounts.Contains(user)) continue;
-                    rewardAccounts.Add(user);
+                    // Give 25% pot / winners
+                    decimal winnings = (TotalPot / 5) / threeMatch.Count;
+                    LottoSystem.LOTTO_POT -= TotalPot / 5;
+                    for (int i = 0; i < threeMatch.Count; i++)
+                    {
+                        Account acc = CreditsSystem.GetAccount(threeMatch[i]);
+                        acc.credits += (double)winnings;
+                    }
                 }
-                miners = rewardAccounts;
-                CreditsSystem.MineCoins(rewardAccounts);
-                minedDay = DateTime.Now.Day;
+                if (fullMatch.Count > 0)
+                {
+                    // Give 65-100% POT / winners
+                    decimal winnings = (LottoSystem.LOTTO_POT / fullMatch.Count);
+                    for (int i = 0; i < fullMatch.Count; i++)
+                    {
+                        Account acc = CreditsSystem.GetAccount(fullMatch[i]) ;
+                        acc.credits += (double)winnings;
+                    }
+                }
+                string winMsg = "> ";
+                // Display message for two matching number winners
+                for (int i = 0; i < twoMatch.Count; i++)
+                {
+                    if (i > 0) winMsg += " ";
+                    winMsg += $"{twoMatch[i].Mention}";
+                }
+                if (twoMatch.Count > 1) winMsg += $" split {TotalPot / 10} BYSC";
+                else if (twoMatch.Count == 1) winMsg += $" won {TotalPot / 10} BYSC";
+
+                // Display message for three matching number winners
+                if (winMsg != "> ") winMsg += "\n> "; // Check if win message is empty
+                for (int i = 0; i < threeMatch.Count; i++)
+                {
+                    if (i > 0) winMsg += " ";
+                    winMsg += $"{threeMatch[i].Mention}";
+                }
+                if (threeMatch.Count > 1) winMsg += $" split {TotalPot / 5} BYSC";
+                else if (threeMatch.Count == 1) winMsg += $" won {TotalPot / 5} BYSC";
+
+                // Display message for four matching number winners
+                if (winMsg != "> ") winMsg += "\n> "; // Check if win message is empty
+                for (int i = 0; i < fullMatch.Count; i++)
+                {
+                    if (i > 0) winMsg += " ";
+                    winMsg += $"{fullMatch[i].Mention}";
+                }
+                if (fullMatch.Count > 1) winMsg += $" split {LottoSystem.LOTTO_POT} BYSC";
+                else if (fullMatch.Count == 1) winMsg += $" won {LottoSystem.LOTTO_POT} BYSC";
+                SocketTextChannel lottoChannel = Byscuits.GetTextChannel(840471064927666186);
+                // Send the message if there are winners
+                lottoChannel.SendMessageAsync($"> WINNING NUMBERS: {winningNums[0]} {winningNums[1]} {winningNums[2]} {winningNums[3]}");
+                if(twoMatch.Count > 0 || threeMatch.Count >0 || fullMatch.Count >0) lottoChannel.SendMessageAsync(winMsg);
+                else lottoChannel.SendMessageAsync("> No winners!");
+                LottoSystem.LOTTO_ENTRIES.Clear();
+                LottoSystem.LOTTO_POT = LottoSystem.INITIAL_LOTTO_POT;
+                LottoSystem.Save();
+                CreditsSystem.SaveFile();
+                lottoDay = DateTime.Now.Day;
             }
             
             return Task.CompletedTask;

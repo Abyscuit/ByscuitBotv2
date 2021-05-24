@@ -72,10 +72,10 @@ namespace ByscuitBotv2.Modules
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.WithFields(
-                new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(false).WithName(username).WithValue($"`{account.Address}`"),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Balance").WithValue(string.Format("{0:N8}", await account.GetBalance())),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Transaction Count").WithValue(string.Format("{0}", await BinanceWallet.web3.Eth.Transactions.GetTransactionCount.SendRequestAsync(account.Address))),
-                // Display more... Creation date? Transaction Count?
+                new EmbedFieldBuilder[]{
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance").WithValue(string.Format("{0:N8}", await account.GetBalance())),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Transaction Count").WithValue(string.Format("{0}", await BinanceWallet.web3.Eth.Transactions.GetTransactionCount.SendRequestAsync(account.Address))),
+                    // Display more... Creation date? Transaction Count?
                 });
             embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });
             embed.WithCurrentTimestamp();
@@ -104,7 +104,7 @@ namespace ByscuitBotv2.Modules
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(false).WithName(username).WithValue(account.Address)});
-            embed.Description = $"`Deposit only BEP-20 and Binance Chain Native Token.`";
+            embed.Description = $"`Deposit only BEP-20 BNB and Tokens.`";
             embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });
             embed.WithCurrentTimestamp();
             await Context.Channel.SendMessageAsync("", false, embed.Build());
@@ -160,7 +160,6 @@ namespace ByscuitBotv2.Modules
             {
                 embed.Description = $"`Withdraw has been sent.`";
                 embed.WithFields(new EmbedFieldBuilder[] {
-                    new EmbedFieldBuilder().WithIsInline(false).WithName(username).WithValue($"`{account.Address}`"),
                     new EmbedFieldBuilder().WithIsInline(false).WithName("Hash").WithValue($"`{receipt.TransactionHash}`"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue(amount),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue(await account.GetBalance()),

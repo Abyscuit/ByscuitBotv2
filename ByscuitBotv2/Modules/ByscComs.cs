@@ -20,10 +20,16 @@ namespace ByscuitBotv2.Modules
 {
     public class ByscComs : ModuleBase<SocketCommandContext>
     {
-        #region fake token interaction
+        public static string CONTRACT_ADDRESS = "0xDaDa9E1cCB78Dbf2586E29B4648b8cA7e5A09a27";
+        public static string POOL_ADDRESS = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
+        static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
+        static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
+        static string CURRENT_NET = TEST_NET; // Set the network to work on here
+        #region internal token interaction
+        // RECODE ALL SO IT WILL BE USED FOR INTERNAL TRANSFERS
         [Command("Wallet")]
-        [Alias("byscuitcoins", "coins")]
-        [Summary("Show the amount of Byscuit Coins in your wallet - Usage: {0}Wallet")]
+        [Alias("byscoin", "coins", "bal", "balance")]
+        [Summary("Show the amount of Byscoin in your wallet - Usage: {0}Wallet")]
         public async Task Wallet(SocketGuildUser user = null)
         {
             if (user == null) user = Context.User as SocketGuildUser;
@@ -32,52 +38,19 @@ namespace ByscuitBotv2.Modules
             EmbedBuilder embed = new EmbedBuilder();
             if (account == null)
             {
-                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Byscuit Coins!");
+                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Byscoin!");
                 return;
             }
-            embed.WithAuthor("Byscuit Coin Wallet", Context.Guild.IconUrl);
+            embed.WithAuthor("Byscoin Wallet", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
-            embed.WithFields(new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(true).WithName("Holding").WithValue(string.Format("{0:p}", account.credits/CreditsSystem.totalcredits)),
+            embed.WithFields(new EmbedFieldBuilder[]{
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Holding").WithValue(string.Format("{0:p}", account.credits/CreditsSystem.totalcredits)),
                 new EmbedFieldBuilder().WithIsInline(true).WithName(username).WithValue(account.credits),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Mined").WithValue(account.totalMined)});
+            });
             embed.WithFooter(new EmbedFooterBuilder() { Text = "Total Supply: " + CreditsSystem.totalcredits});
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
-
-        [Command("Miners")]
-        [Alias("byscminers", "showminers")]
-        [Summary("Show the last miners and the total amount they mined - Usage: {0}Miners")]
-        public async Task Miners([Remainder] string text = "")
-        {
-            // Check for who is boosting then display their data
-            if(CommandHandler.miners.Count == 0)
-            {
-                await Context.Channel.SendMessageAsync($"> There are currently no miners on record!");
-                return;
-            }
-            string names = "";
-            string credits = "";
-            string lastmined = "";
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.WithAuthor("Byscuit Coin Miners", Context.Guild.IconUrl);
-            foreach (SocketGuildUser user in CommandHandler.miners)
-            {
-                string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
-                names += username + "\n";
-                Account account = CreditsSystem.GetAccount(user);
-                if (account == null) continue;
-                credits += account.totalMined + "\n";
-                lastmined += account.lastMinedAmount + "\n";
-            }
-            embed.WithColor(36, 122, 191);
-            embed.WithFields(new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(true).WithName("Users").WithValue(names),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Mined").WithValue(credits),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Last Mined Amount").WithValue(lastmined)});
-            embed.WithFooter(new EmbedFooterBuilder() { Text = "Total Supply: " + CreditsSystem.totalcredits });
-            await Context.Channel.SendMessageAsync("", false, embed.Build());
-        }
-
 
         [Command("ByscStats")]
         [Alias("ByscuitStats", "coinstats")]
@@ -91,11 +64,9 @@ namespace ByscuitBotv2.Modules
             }
             string names = "";
             string credits = "";
-            string totalMined = "";
-            double totalCredits = 0, totalCoinsMined = 0;
 
             EmbedBuilder embed = new EmbedBuilder();
-            embed.WithAuthor("Byscuit Coin Stats", Context.Guild.IconUrl);
+            embed.WithAuthor("Byscoin Stats", Context.Guild.IconUrl);
             foreach (Account acc in CreditsSystem.accounts)
             {
                 SocketGuildUser user = Context.Guild.GetUser(acc.discordID);
@@ -106,17 +77,12 @@ namespace ByscuitBotv2.Modules
                 Account account = CreditsSystem.GetAccount(user);
                 if (account == null) continue;
                 credits += account.credits + "\n";
-                totalMined += account.totalMined + "\n";
-                totalCredits += account.credits;
-                totalCoinsMined += account.totalMined;
             }
-            CreditsSystem.totalcredits = totalCredits;
-            CreditsSystem.SaveFile();
+            if(names == "") { names = "No users"; credits = "None"; }
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(true).WithName("Users").WithValue(names),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Coins").WithValue(credits),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Mined Amount").WithValue(totalMined)});
-            embed.WithFooter(new EmbedFooterBuilder() { Text = $"Total Supply: {CreditsSystem.totalcredits} | Total Mined: {totalCoinsMined}" });
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Coins").WithValue(credits),});
+            embed.WithFooter(new EmbedFooterBuilder() { Text = $"Total Supply: {CreditsSystem.totalcredits}" });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
         #endregion
@@ -160,11 +126,6 @@ namespace ByscuitBotv2.Modules
         #region Byscoin
         // All Discord Byscoin should be testnet to save money
         // Cashout to real BNB/ETH on mainnet
-        public static string CONTRACT_ADDRESS = "0xDaDa9E1cCB78Dbf2586E29B4648b8cA7e5A09a27";
-        public static string POOL_ADDRESS = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
-        static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
-        static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
-        static string CURRENT_NET = TEST_NET; // Set the network to work on here
         [Command("Byscoin")]
         [Alias("byscbal", "byscwallet")]
         [Summary("Show the amount of Byscoin in your Binance Smart Chain wallet - Usage: {0}Byscoin")]
@@ -284,7 +245,7 @@ namespace ByscuitBotv2.Modules
             {
                 embed.Description = $"`Tip has been sent to {rUsername}`";
                 embed.WithFields(new EmbedFieldBuilder[] {
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue($"{amount:N8} (${amount * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue($"{amount:N0} (${amount * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N8} (${balVal * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(transactionReceipt.GasUsed.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei) + " BNB")
                 });
@@ -407,9 +368,9 @@ namespace ByscuitBotv2.Modules
                     embed.WithFields(new EmbedFieldBuilder[] {
                     new EmbedFieldBuilder().WithIsInline(false).WithName("Transaction Hash").WithValue($"{transactionReceipt.TransactionHash}"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{amount:N8} (${amount * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{amount:N0} (${amount * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount in ETH").WithValue($"{amountEth:N8} (${amountEth * (decimal)ETHUSDValue:N2})"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N8} (${balVal * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N0} (${balVal * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue((decimal)Web3.Convert.FromWei(transactionReceipt.GasUsed.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei)+ " BNB")
                 });
                 embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + transactionReceipt.BlockNumber });
@@ -427,7 +388,8 @@ namespace ByscuitBotv2.Modules
         public async Task FinishCashout(uint claimID, string status = "CANCELLED", string ETHTransactionHash = "")
         {
             await Context.Message.DeleteAsync();
-            if (status.ToUpper() != "REJECTED" || status.ToUpper() != "CANCELLED") status = "COMPLETED";
+            status = status.ToUpper();
+            if (status != "REJECTED" || status != "CANCELLED") status = "COMPLETED";
             CashoutClaim Claim = null;
             foreach (CashoutClaim claim in cashoutClaims)
             {// Adds option to go back to claim ID if not removed
@@ -456,7 +418,7 @@ namespace ByscuitBotv2.Modules
                     new EmbedFieldBuilder().WithIsInline(false).WithName("ETH Transaction Hash").WithValue($"{Claim.ETHTransactionHash}"),
                     new EmbedFieldBuilder().WithIsInline(false).WithName("ETH Address").WithValue($"{Claim.ETHAddress}"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{Claim.BYSCAmount:N8} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Cashed Out").WithValue($"{Claim.BYSCAmount:N0} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})"),
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Amount in ETH").WithValue($"{Claim.ETHAmount:N8} (${Claim.ETHAmount * (decimal)ETHUSDValue:N2})")
                 });
             }
@@ -464,7 +426,7 @@ namespace ByscuitBotv2.Modules
             {
                 embed.WithFields(new EmbedFieldBuilder[] {
                     new EmbedFieldBuilder().WithIsInline(true).WithName("Claim ID").WithValue($"{claimID}"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Bycoin Amount").WithValue($"{Claim.BYSCAmount:N8} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})")
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Bycoin Amount").WithValue($"{Claim.BYSCAmount:N0} (${Claim.BYSCAmount * (decimal)BYSCUSDValue:N2})")
                 });
 
             }

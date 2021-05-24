@@ -54,7 +54,7 @@ namespace ByscuitBotv2.Lotto
                 embed.Description = $"`{username} entry has been submitted`";
                 embed.WithFields(new EmbedFieldBuilder[]{
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Total POT").WithValue($"{LottoSystem.LOTTO_POT} BYSC (${LottoSystem.LOTTO_POT * BYSCUSDValue:N2})"),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Entries").WithValue($"{userEntries}"),
+                new EmbedFieldBuilder().WithIsInline(true).WithName($"{username} Entries").WithValue($"{userEntries}"),
             });
                 embed.WithFooter(new EmbedFooterBuilder() { Text = $"Total Entries: {LottoSystem.LOTTO_ENTRIES.Count}" });
                 Context.Channel.SendMessageAsync(embed: embed.Build());

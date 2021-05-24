@@ -114,6 +114,7 @@ namespace ByscuitBotv2.Modules
             await Utility.DirectMessage(Context.User as SocketGuildUser, $"Fetched {num} of messages from {username}@byscuitbros.site!");
         }
 
+        #region Steam Accounts
         static int taCount = 0;// Variable to keep track of throwaway
         [Command("ThrowAway")]
         [Alias("steamacct", "gensteam", "getsteam")]
@@ -368,11 +369,11 @@ namespace ByscuitBotv2.Modules
             File.WriteAllText(path, JsonConvert.SerializeObject(steamAccounts, Formatting.Indented));
             await Context.Channel.SendMessageAsync($"> Successfully added {accCount} cracked accounts to database\n> and updated {ncCount} account's username!");
         }
+        #endregion
 
 
 
-
-        /*
+        /*          NOPE NOT ANYMORE LOL
          * ------------------------------------------- *
          *   You need to create a function for email   *
          *   generation and or inbox with imap?        *
@@ -493,8 +494,7 @@ namespace ByscuitBotv2.Modules
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Joined Server").WithValue(user.JoinedAt.Value.LocalDateTime.ToString("MM/dd/yyyy")),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscuit Coins").WithValue(hasAccount ? account.credits : 0),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Total Mined").WithValue(hasAccount ? account.totalMined : 0),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscoins").WithValue(hasAccount ? account.credits : 0),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Account Created").WithValue(user.CreatedAt.LocalDateTime.ToString("d")),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Booster").WithValue(user.Roles.Contains(CommandHandler.PremiumByscuitRole) ? "Yes" : "No"),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("BSC Enabled").WithValue(BinanceWallet.GetAccount(user) != null ? "Yes" : "No"), // Update when BSC is enabled on the bot

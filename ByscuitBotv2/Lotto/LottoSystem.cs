@@ -64,9 +64,5 @@ namespace ByscuitBotv2.Lotto
             return count;
         }
 
-        public static void DoLottery()
-        {
-
-        }
     }
 }

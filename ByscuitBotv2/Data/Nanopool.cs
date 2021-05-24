@@ -137,8 +137,8 @@ namespace ByscuitBotv2.Data
                 double termUSDVal = termAmount * dETHUSDValue;
                 double bnbAmount = termAmount / BNBETH_PRICE; // X.XXXXX ETH = 1 BNB | divide out the price per BNB
                 totalBNB += bnbAmount;
-                ratio += string.Format("{3}: {0:P} ({1:N8} ETH | {5:N8} BNB | ${2:N2}) | ({4} Shares)\n", termRate / 100, termAmount,
-                    termUSDVal, miner.id, miner.termShares, bnbAmount);
+                ratio += string.Format("{3}: {0:P} ({1:N8} ETH | ${2:N2}) | ({4} Shares | {5}MH/s)\n", termRate / 100, termAmount,
+                    termUSDVal, miner.id, miner.termShares, miner.hashrate);
             }
             double bnbBal = double.Parse($"{balance:N8}") / BNBETH_PRICE;
             if (totalBNB != bnbBal)
@@ -234,6 +234,7 @@ namespace ByscuitBotv2.Data
 
             public void calcTermShares()
             {
+                if (rating < prevShares) prevShares = 0;
                 termShares = rating - prevShares;
             }
         }
