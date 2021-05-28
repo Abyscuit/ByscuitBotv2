@@ -83,7 +83,7 @@ namespace ByscuitBotv2.Modules
         }
 
         [Command("BNBDeposit")]
-        [Alias("bscdeposit", "deposit", "depositbnb")]
+        [Alias("bscdeposit", "depositbnb")]
         [Summary("Show your deposit address for Binance Smart Chain wallet - Usage: {0}BNBDeposit")]
         public async Task Deposit()
         {
@@ -111,7 +111,7 @@ namespace ByscuitBotv2.Modules
         }
 
         [Command("BNBWithdraw")]
-        [Alias("bscwithdraw", "withdraw", "withdrawbnb")]
+        [Alias("bscwithdraw", "withdrawbnb")]
         [Summary("Withdraw BNB from your Binance Smart Chain wallet - Usage: {0}BNBWithdraw <amount> <address>")]
         public async Task Withdraw(decimal amount = -1, string address = "")
         {
@@ -173,7 +173,7 @@ namespace ByscuitBotv2.Modules
         }
 
         [Command("BNBTip")]
-        [Alias("bsctip", "tip", "tipbnb")]
+        [Alias("bsctip", "tipbnb")]
         [Summary("Tip BNB from your Binance Smart Chain wallet to another user - Usage: {0}BNBTip <amount> <@user>")]
         public async Task Tip(decimal amount = -1, SocketGuildUser receipient = null, [Remainder]string text = "")
         {
