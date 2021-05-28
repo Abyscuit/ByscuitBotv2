@@ -17,6 +17,7 @@ namespace ByscuitBotv2.Data
         public string GOOGLE_API_KEY = "";
         public string TWITCH_CLIENT_ID = "";
         public string TWITCH_SECRET = "";
+        public string BSCSCAN_API_KEY = "";
 
         public static Config LoadConfig()
         {
