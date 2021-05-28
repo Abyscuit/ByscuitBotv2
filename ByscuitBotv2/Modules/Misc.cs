@@ -484,17 +484,13 @@ namespace ByscuitBotv2.Modules
             Account account = CreditsSystem.GetAccount(user);
             EmbedBuilder embed = new EmbedBuilder();
             bool hasAccount = account != null;
-            if (!hasAccount)
-            {
-                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Byscuit Coins!");
-                return;
-            }
+            if (!hasAccount) account = CreditsSystem.AddUser(user);
             embed.WithAuthor($"{username} Stats", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Joined Server").WithValue(user.JoinedAt.Value.LocalDateTime.ToString("MM/dd/yyyy")),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscoins").WithValue(hasAccount ? account.credits : 0),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscoin").WithValue(hasAccount ? account.credits : 0),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Account Created").WithValue(user.CreatedAt.LocalDateTime.ToString("d")),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Booster").WithValue(user.Roles.Contains(CommandHandler.PremiumByscuitRole) ? "Yes" : "No"),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("BSC Enabled").WithValue(BinanceWallet.GetAccount(user) != null ? "Yes" : "No"), // Update when BSC is enabled on the bot
