@@ -27,6 +27,7 @@ namespace byscuitBot
         bool disconnected = false;
         string user = "";
         public static SocketRole PremiumByscuitRole = null;
+        public static SocketGuild Byscuits = null;
         Random random = new Random();
 
         /*
@@ -183,16 +184,21 @@ namespace byscuitBot
                 else if (fullMatch.Count == 1) winMsg += $" won {LottoSystem.LOTTO_POT} BYSC";
                 SocketTextChannel lottoChannel = Byscuits.GetTextChannel(840471064927666186);
                 // Send the message if there are winners
-                lottoChannel.SendMessageAsync($"> WINNING NUMBERS: {winningNums[0]} {winningNums[1]} {winningNums[2]} {winningNums[3]}");
-                if(twoMatch.Count > 0 || threeMatch.Count >0 || fullMatch.Count >0) lottoChannel.SendMessageAsync(winMsg);
-                else lottoChannel.SendMessageAsync("> No winners!");
+                string msg = $"> WINNING NUMBERS: {winningNums[0]} {winningNums[1]} {winningNums[2]} {winningNums[3]}\n";
+                if (twoMatch.Count > 0 || threeMatch.Count > 0 || fullMatch.Count > 0) lottoChannel.SendMessageAsync(msg + winMsg);
+                else lottoChannel.SendMessageAsync(msg + "> No winners!");
                 LottoSystem.LOTTO_ENTRIES.Clear();
                 LottoSystem.LOTTO_POT = LottoSystem.INITIAL_LOTTO_POT;
                 LottoSystem.Save();
                 CreditsSystem.SaveFile();
                 lottoDay = DateTime.Now.Day;
             }
-            
+            // Check if any new deposits are coming in
+            // Might want to create a new thread for this
+            if (Deposit.NEW_DEPOSITS) {
+                printConsole($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
+                Deposit.CheckDepositClaims();
+            }
             return Task.CompletedTask;
         }
 
@@ -368,12 +374,13 @@ namespace byscuitBot
             user = client.CurrentUser.ToString();
             Accounts.Load();
             Roles.Load();
-            SocketGuild Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
+            Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
             PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
             CashoutSystem.Load();
             LottoSystem.Load();
+            Deposit.Load();
             return Task.CompletedTask;
         }
 
@@ -505,6 +512,8 @@ namespace byscuitBot
             if (user.Id != BotID)
                 await channel.SendMessageAsync(msg);   //Welcomes the new user
 
+            // Add user to the byscoin accounts
+            CreditsSystem.AddUser(user);
 
             // Read audit log and tell who invited another user
             /*
