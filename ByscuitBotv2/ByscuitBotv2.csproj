@@ -318,6 +318,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Byscoin\CashoutSystem.cs" />
+    <Compile Include="Byscoin\Deposit.cs" />
     <Compile Include="CommandHandler.cs" />
     <Compile Include="Data\Account.cs" />
     <Compile Include="Data\Accounts.cs" />
