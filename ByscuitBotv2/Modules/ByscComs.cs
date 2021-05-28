@@ -24,7 +24,7 @@ namespace ByscuitBotv2.Modules
         public static string POOL_ADDRESS = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
         static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
-        static string CURRENT_NET = TEST_NET; // Set the network to work on here
+        public static string CURRENT_NET = TEST_NET; // Set the network to work on here
         #region internal token interaction
         // RECODE ALL SO IT WILL BE USED FOR INTERNAL TRANSFERS
         [Command("Wallet")]
@@ -36,17 +36,15 @@ namespace ByscuitBotv2.Modules
             string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
             Account account = CreditsSystem.GetAccount(user);
             EmbedBuilder embed = new EmbedBuilder();
-            if (account == null)
-            {
-                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Byscoin!");
-                return;
-            }
+            if (account == null) account = CreditsSystem.AddUser(user);
+            double ETHUSDValue = Nanopool.GetPrices().price_usd;
+            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
             embed.WithAuthor("Byscoin Wallet", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Holding").WithValue(string.Format("{0:p}", account.credits/CreditsSystem.totalcredits)),
-                new EmbedFieldBuilder().WithIsInline(true).WithName(username).WithValue(account.credits),
+                new EmbedFieldBuilder().WithIsInline(true).WithName(username).WithValue($"{account.credits} (${account.credits * (double)BYSCUSDValue:N2})"),
             });
             embed.WithFooter(new EmbedFooterBuilder() { Text = "Total Supply: " + CreditsSystem.totalcredits});
             await Context.Channel.SendMessageAsync("", false, embed.Build());
@@ -84,6 +82,167 @@ namespace ByscuitBotv2.Modules
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Total Coins").WithValue(credits),});
             embed.WithFooter(new EmbedFooterBuilder() { Text = $"Total Supply: {CreditsSystem.totalcredits}" });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        [Command("Tip")]
+        [Alias("byscointip", "byscoinsend", "bysctip")]
+        [Summary("Tip a user in Byscoin - Usage: {0}Tip <amount> <@user>")]
+        public async Task ByscTip(string amount = "-1", SocketGuildUser receipient = null, [Remainder] string text = "")
+        {
+            // approve the transaction with pool address as spender from tipping account with amount as allowance
+            // send the transaction with the pool address account
+            decimal minimumTip = 0.05m;
+            var user = Context.User as SocketGuildUser;
+            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
+            if (amount == "-1" || receipient == null)
+            {
+                string msg = "> Tip command called incorrectly!" +
+                    "\n> Usage: **Tip** *<amount>* *<@user>*";
+                await Context.Channel.SendMessageAsync(msg);
+                return;
+            }
+            if (receipient.IsBot)
+            {
+                await Context.Channel.SendMessageAsync("> Cannot tip a bot!");
+                return;
+            }
+            Account account = CreditsSystem.GetAccount(user);
+            var receipientAccount = CreditsSystem.GetAccount(receipient);
+            string rUsername = (!string.IsNullOrEmpty(receipient.Nickname) ? receipient.Nickname : receipient.Username) + "#" + receipient.Discriminator;
+            // Create user accounts if they do not exist
+            if (account == null) account = CreditsSystem.AddUser(user);
+            if (receipientAccount == null) receipientAccount = CreditsSystem.AddUser(receipient);
+
+            double ETHUSDValue = Nanopool.GetPrices().price_usd;
+            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+
+            decimal byscAmount = 0;
+            bool dollarValue = false;
+            if (amount.Contains("$")) { amount = amount.Replace("$", ""); dollarValue = true; }
+            if (amount.ToUpper() == "ALL") { amount = "" + account.credits; }
+            if(!decimal.TryParse(amount, out byscAmount))
+            {
+                await Context.Channel.SendMessageAsync("> Amount to send was not in the correct format!" +
+                    "\n> Amount can be specified in USD by \"$X.XX\" or BYSC amount by omitting '$'");
+            }
+            if (dollarValue) byscAmount /= BYSCUSDValue;
+            if(account.credits < (double)byscAmount)
+            {
+                await Context.Channel.SendMessageAsync($"> Insufficient balance {user.Mention}");
+                return;
+            }
+            bool minimumMet = byscAmount >= minimumTip;
+            if (!minimumMet)
+            {
+                string msg = $"> Minimum amount you can tip is {minimumTip} BYSC.";
+                await Context.Channel.SendMessageAsync(msg);
+                return;
+            }
+            account.credits -= (double)byscAmount;
+            receipientAccount.credits += (double)byscAmount;
+            string tipMsg = $"> {username} sent {byscAmount:N} BYSC (${byscAmount * BYSCUSDValue:N2}) to {rUsername}!";
+            CreditsSystem.SaveFile();
+            await Context.Channel.SendMessageAsync(tipMsg);
+        }
+
+
+        [Command("Deposit")]
+        [Alias("byscdeposit", "depositbysc")]
+        [Summary("Create a deposit claim and show deposit address for Byscoin wallet (MUST PUT ADDRESS YOU'RE DEPOSITTING FROM)- Usage: {0}Deposit <address>")]
+        public async Task Deposit([Remainder] string address = "")
+        {
+
+            Nethereum.Util.AddressUtil addressUtil = new Nethereum.Util.AddressUtil();
+            if (!addressUtil.IsValidEthereumAddressHexFormat(address) || !addressUtil.IsValidAddressLength(address)
+                || !addressUtil.IsNotAnEmptyAddress(address))
+            {
+                string msg = $"> The address {address} is not a valid address!" +
+                    $"\n> Double check you are entering it correctly!";
+                await Context.Channel.SendMessageAsync(msg);
+                return;
+            }
+            //decimal minimumDeposit = 0.01m;
+            var user = Context.User as SocketGuildUser;
+            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
+            Account account = CreditsSystem.GetAccount(user);
+            EmbedBuilder embed = new EmbedBuilder();
+            if (account == null) account = CreditsSystem.AddUser(user);
+            
+            embed.WithAuthor("Byscoin Deposit", Context.Guild.IconUrl);
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
+            embed.WithColor(36, 122, 191);
+            embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(false).WithName("Deposit Address").WithValue(POOL_ADDRESS)
+            });
+            embed.Description = $"```Deposit only BEP20 Byscoin to this address!" +
+                $"\nDeposits will be confirmed after 1 confirmation." +
+                $"\nIf your deposit takes longer than 30 minutes from now to confirm it won't be counted!" +
+                $"\n*****CALL THIS COMMAND FOR EVERY DEPOSIT!*****```";
+            embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });
+            embed.WithCurrentTimestamp();
+            Byscoin.Deposit.CreateDepositClaim(address, user.Id);
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        [Command("Withdraw")]
+        [Alias("byscwithdraw", "withdrawbysc")]
+        [Summary("Withdraw BYSC from your wallet to a Binance Smart Chain Wallet (BEP-20) - Usage: {0}Withdraw <amount> <address>")]
+        public async Task Withdraw(decimal amount = -1, string address = "")
+        {
+            await Context.Channel.SendMessageAsync("> This command is a work in progress.");
+            return;
+            if (amount == -1 || address == "")
+            {
+                string msg = "> Withdraw command called incorrectly!" +
+                    "\n> Usage: **Withdraw** *<amount>* *<address>*";
+                await Context.Channel.SendMessageAsync(msg);
+                return;
+            }
+            decimal minimumWithdraw = 0.01m;
+            var user = Context.User as SocketGuildUser;
+            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
+            Account account = CreditsSystem.GetAccount(user);
+            EmbedBuilder embed = new EmbedBuilder();
+            if (account == null) account = CreditsSystem.AddUser(user);
+            if(account.credits < (double)amount)
+            {
+                return;
+            }
+
+            Nethereum.Util.AddressUtil addressUtil = new Nethereum.Util.AddressUtil();
+            if (!addressUtil.IsValidEthereumAddressHexFormat(address))
+            {
+                string msg = $"> The address {address} is not a valid address!" +
+                    $"\n> Double check you are entering it correctly!";
+                await Context.Channel.SendMessageAsync(msg);
+                return;
+            }
+            embed.WithAuthor("Byscoin Coin Withdraw", Context.Guild.IconUrl);
+            embed.WithThumbnailUrl(user.GetAvatarUrl());
+            embed.WithColor(36, 122, 191);
+            bool minimumMet = amount >= minimumWithdraw;
+            if (!minimumMet)
+            {
+                string msg = $"> Minimum amount you can withdraw is {minimumWithdraw} BNB.";
+                await Context.Channel.SendMessageAsync(msg);
+                return;
+            }
+            /*TransactionReceipt receipt = await account.SendBNB(address, amount);
+            if (receipt.Failed()) embed.Description = $"`Withdraw has failed.`";
+            else
+            {
+                embed.Description = $"`Withdraw has been sent.`";
+                embed.WithFields(new EmbedFieldBuilder[] {
+                    new EmbedFieldBuilder().WithIsInline(false).WithName("Hash").WithValue($"`{receipt.TransactionHash}`"),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue(amount),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue(await account.GetBalance()),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed)/ 100000000m),
+                    new EmbedFieldBuilder().WithIsInline(true).WithName("Index").WithValue(receipt.TransactionIndex),
+                });
+            }
+            embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });
+            embed.WithCurrentTimestamp();
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
+            */
         }
         #endregion
 
@@ -126,139 +285,13 @@ namespace ByscuitBotv2.Modules
         #region Byscoin
         // All Discord Byscoin should be testnet to save money
         // Cashout to real BNB/ETH on mainnet
-        [Command("Byscoin")]
-        [Alias("byscbal", "byscwallet")]
-        [Summary("Show the amount of Byscoin in your Binance Smart Chain wallet - Usage: {0}Byscoin")]
-        public async Task GetBalance([Remainder] string text = "")
-        {
-            SocketGuildUser user = Context.User as SocketGuildUser;
-            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
-            BinanceWallet.WalletAccount account = BinanceWallet.GetAccount(user);
-            if (account == null)
-            {
-                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ does not have a Binance Wallet linked!" +
-                    "\n> Use the **BNBRegister** command to link a wallet.");
-                return;
-            }
 
-            Web3 web3 = new Web3(CURRENT_NET);
-            var balanceOfFunctionMessage = new BalanceOfFunction()
-            {
-                Owner = account.Address,
-            };
-
-            var balanceHandler = web3.Eth.GetContractQueryHandler<BalanceOfFunction>();
-            var balance = await balanceHandler.QueryAsync<BigInteger>(CONTRACT_ADDRESS, balanceOfFunctionMessage);
-
-            var totalSupplyFunctionMessage = new TotalSupplyFunction();
-
-            var totalSupplyHandler = web3.Eth.GetContractQueryHandler<TotalSupplyFunction>();
-            var totalSupply = await totalSupplyHandler.QueryAsync<BigInteger>(CONTRACT_ADDRESS, totalSupplyFunctionMessage);
-
-            decimal totalSupplyVal = Web3.Convert.FromWei(totalSupply);
-
-            double ETHUSDValue = Nanopool.GetPrices().price_usd;
-            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
-            decimal balVal = Web3.Convert.FromWei(balance);
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.WithAuthor("Byscoin Wallet", Context.Guild.IconUrl);
-            embed.WithColor(36, 122, 191);
-            embed.WithFields(new EmbedFieldBuilder[]{
-                new EmbedFieldBuilder().WithIsInline(false).WithName(username).WithValue(account.Address),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscoin Balance").WithValue($"{balVal:N8} (${balVal * BYSCUSDValue:N2})"),
-            });
-            embed.WithFooter(new EmbedFooterBuilder() { Text = $"Total Supply: {totalSupplyVal} (${totalSupplyVal * BYSCUSDValue:N2})" });
-            await Context.Channel.SendMessageAsync("", false, embed.Build());
-        }
-
-
-        [Command("ByscTip")]
-        [Alias("byscointip", "byscoinsend")]
-        [Summary("Tip a user in Byscoin (Uses BNB for gas) - Usage: {0}ByscTip <@user>")]
-        public async Task ByscTip(decimal amount = -1, SocketGuildUser receipient = null, [Remainder] string text = "")
-        {
-            // approve the transaction with pool address as spender from tipping account with amount as allowance
-            // send the transaction with the pool address account
-            decimal minimumTip = 0.05m;
-            var user = Context.User as SocketGuildUser;
-            string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
-            if (amount == -1 || receipient == null)
-            {
-                string msg = "> Tip command called incorrectly!" +
-                    "\n> Usage: **BYSCTip** *<amount>* *<@user>*";
-                await Context.Channel.SendMessageAsync(msg);
-                return;
-            }
-            BinanceWallet.WalletAccount account = BinanceWallet.GetAccount(user);
-            var receipientAccount = BinanceWallet.GetAccount(receipient);
-            string rUsername = (!string.IsNullOrEmpty(receipient.Nickname) ? receipient.Nickname : receipient.Username) + "#" + receipient.Discriminator;
-            if (account == null)
-            {
-                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no Binance Wallet linked!" +
-                    "\n> Use the **BNBRegister** command to link a wallet.");
-                return;
-            }
-            if (receipientAccount == null)
-            {
-                await Context.Channel.SendMessageAsync($"> **{rUsername}**_({receipient.Id})_ has no Binance Wallet linked!" +
-                    $"\n> {receipient.Mention} use the **BNBRegister** command to link a wallet.");
-                return;
-            }
-
-            Web3 web3 = new Web3(account.GetAccount(), CURRENT_NET);
-
-            var receiverAddress = receipientAccount.Address;
-            var transferHandler = web3.Eth.GetContractTransactionHandler<TransferFunction>();
-            var transfer = new TransferFunction()
-            {
-                To = receiverAddress,
-                TokenAmount = Web3.Convert.ToWei(amount)
-            };
-            var transactionReceipt = await transferHandler.SendRequestAndWaitForReceiptAsync(CONTRACT_ADDRESS, transfer);
-
-
-            var balanceOfFunctionMessage = new BalanceOfFunction()
-            {
-                Owner = account.Address,
-            };
-
-            var balanceHandler = web3.Eth.GetContractQueryHandler<BalanceOfFunction>();
-            var balance = await balanceHandler.QueryAsync<BigInteger>(CONTRACT_ADDRESS, balanceOfFunctionMessage);
-
-            double ETHUSDValue = Nanopool.GetPrices().price_usd;
-            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
-            decimal balVal = Web3.Convert.FromWei(balance);
-            EmbedBuilder embed = new EmbedBuilder();
-            string address = receipientAccount.Address;
-            embed.WithAuthor("Byscoin Tip", Context.Guild.IconUrl);
-            embed.WithThumbnailUrl(user.GetAvatarUrl());
-            embed.WithColor(36, 122, 191);
-            bool minimumMet = amount >= minimumTip;
-            if (!minimumMet)
-            {
-                string msg = $"> Minimum amount you can tip is {minimumTip} BYSC.";
-                await Context.Channel.SendMessageAsync(msg);
-                return;
-            }
-            //if (transactionReceipt.) embed.Description = $"`Tip failed to send! Try again in a bit.`";
-            //else
-            {
-                embed.Description = $"`Tip has been sent to {rUsername}`";
-                embed.WithFields(new EmbedFieldBuilder[] {
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue($"{amount:N0} (${amount * (decimal)BYSCUSDValue:N2})"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue($"{balVal:N8} (${balVal * (decimal)BYSCUSDValue:N2})"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(transactionReceipt.GasUsed.Value, Nethereum.Util.UnitConversion.EthUnit.Gwei) + " BNB")
-                });
-            }
-            embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + transactionReceipt.BlockNumber });
-            embed.WithCurrentTimestamp();
-            await Context.Channel.SendMessageAsync("", false, embed.Build());
-        }
 
         public Thread cashoutThread;
         // Created a list for threads so multiple people can cashout
         // at the same time. Need to check for resources used in the running
         // threads as this could lead to file or memory corruption
+        /* Might just remove this as there will be a Pancake swap Pool
         public static List<Thread> CASHOUT_THREADS = new List<Thread>(); // Use with caution
         [Command("Cashout")]
         [Alias("byscoincashout", "bysccashout")]
@@ -433,7 +466,7 @@ namespace ByscuitBotv2.Modules
             embed.WithCurrentTimestamp();
             await Utility.DirectMessage(user, embed: embed.Build());
         }
-
+        */
         #endregion
     }
 }
