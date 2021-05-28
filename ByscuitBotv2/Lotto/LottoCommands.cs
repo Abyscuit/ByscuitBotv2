@@ -18,7 +18,7 @@ namespace ByscuitBotv2.Lotto
         Thread bgThread; // Thread for background tasking
         [Command("Entry")]
         [Alias("lottoentry", "lotto")]
-        [Summary("Enter the Byscoin Lotto choosing 4 numbers for 100 BYSC - Usage: {0}lotto <num> <num> <num> <num>")]
+        [Summary("Enter the Byscoin Lotto choosing 4 numbers for 100 BYSC - Usage: {0}entry <num> <num> <num> <num>")]
         public async Task Entry([Remainder]string numbers = "")
         {
             await Context.Message.DeleteAsync();
@@ -29,7 +29,7 @@ namespace ByscuitBotv2.Lotto
             string[] numArr = numbers.Split(' ');
             if (numbers == "" || numArr.Length != 4)
             {
-                await Context.Channel.SendMessageAsync("You must choose 4 numbers! - Usage: {0}lotto <num> <num> <num> <num>");
+                await Context.Channel.SendMessageAsync("You must choose 4 numbers! - Usage: {0}entry <num> <num> <num> <num>");
                 return;
             }
             bgThread = new Thread(new ThreadStart(() =>
@@ -37,12 +37,18 @@ namespace ByscuitBotv2.Lotto
                 SocketGuildUser user = Context.User as SocketGuildUser;
                 string username = (string.IsNullOrEmpty(user.Nickname) ? user.Username : user.Nickname) + "#" + user.Discriminator;
                 LottoEntry entry = new LottoEntry();
-                entry.numbers = new int[] {
-                    int.Parse(numArr[0]),
-                    int.Parse(numArr[1]),
-                    int.Parse(numArr[2]),
-                    int.Parse(numArr[3]),
-                };
+                entry.numbers = new int[] { -1, -1, -1, -1 };
+                bool failed = false;
+                for (int i = 0; i < 4; i++)
+                {
+                    if(!int.TryParse(numArr[i], out entry.numbers[i]))
+                    {
+                        Context.Channel.SendMessageAsync("> Use only 4 digits of 0-9!");
+                        failed = true;
+                        break;
+                    }
+                }
+                if (failed) return;
                 entry.discordID = Context.User.Id;
                 double ETHUSDValue = Nanopool.GetPrices().price_usd;
                 decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
