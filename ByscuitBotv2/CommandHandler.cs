@@ -109,6 +109,9 @@ namespace byscuitBot
                 printConsole("Doing Byscoin Lotto");
                 if (Accounts.accounts == null) return Task.CompletedTask;
                 Accounts.Sort();
+                twoMatch.Clear();
+                threeMatch.Clear();
+                fullMatch.Clear();
                 // Add the top 10 leader board members
                 for (int i = 0; i < LottoSystem.LOTTO_ENTRIES.Count; i++)
                 {
@@ -160,28 +163,31 @@ namespace byscuitBot
                     if (i > 0) winMsg += " ";
                     winMsg += $"{twoMatch[i].Mention}";
                 }
-                if (twoMatch.Count > 1) winMsg += $" split {TotalPot / 10} BYSC";
-                else if (twoMatch.Count == 1) winMsg += $" won {TotalPot / 10} BYSC";
+                string match2txt = "(matched with 2 numbers)";
+                if (twoMatch.Count > 1) winMsg += $" split {TotalPot / 10} BYSC {match2txt}";
+                else if (twoMatch.Count == 1) winMsg += $" won {TotalPot / 10} BYSC {match2txt}";
 
                 // Display message for three matching number winners
-                if (winMsg != "> ") winMsg += "\n> "; // Check if win message is empty
+                if (winMsg != "> " && threeMatch.Count > 0) winMsg += "\n> "; // Check if win message is empty
+                string match3txt = "(matched with 3 numbers)";
                 for (int i = 0; i < threeMatch.Count; i++)
                 {
                     if (i > 0) winMsg += " ";
                     winMsg += $"{threeMatch[i].Mention}";
                 }
-                if (threeMatch.Count > 1) winMsg += $" split {TotalPot / 5} BYSC";
-                else if (threeMatch.Count == 1) winMsg += $" won {TotalPot / 5} BYSC";
+                if (threeMatch.Count > 1) winMsg += $" split {TotalPot / 5} BYSC {match3txt}";
+                else if (threeMatch.Count == 1) winMsg += $" won {TotalPot / 5} BYSC {match3txt}";
 
                 // Display message for four matching number winners
-                if (winMsg != "> ") winMsg += "\n> "; // Check if win message is empty
+                if (winMsg != "> " && fullMatch.Count > 0) winMsg += "\n> "; // Check if win message is empty
+                string matchFulltxt = "(matched with 4 numbers)";
                 for (int i = 0; i < fullMatch.Count; i++)
                 {
                     if (i > 0) winMsg += " ";
                     winMsg += $"{fullMatch[i].Mention}";
                 }
-                if (fullMatch.Count > 1) winMsg += $" split {LottoSystem.LOTTO_POT} BYSC";
-                else if (fullMatch.Count == 1) winMsg += $" won {LottoSystem.LOTTO_POT} BYSC";
+                if (fullMatch.Count > 1) winMsg += $" split {LottoSystem.LOTTO_POT} BYSC {matchFulltxt}";
+                else if (fullMatch.Count == 1) winMsg += $" won {LottoSystem.LOTTO_POT} BYSC {matchFulltxt}";
                 SocketTextChannel lottoChannel = Byscuits.GetTextChannel(840471064927666186);
                 // Send the message if there are winners
                 string msg = $"> WINNING NUMBERS: {winningNums[0]} {winningNums[1]} {winningNums[2]} {winningNums[3]}\n";
