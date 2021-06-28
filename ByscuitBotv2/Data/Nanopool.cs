@@ -11,6 +11,164 @@ namespace ByscuitBotv2.Data
 {
     public class Nanopool
     {
+        #region RESPONSES
+        // ---------- CLASSES FOR RESPONSES ----------
+        public class Response
+        {
+            public bool status { get; set; }
+            public Account data { get; set; }
+            public string error { get; set; }
+        }
+        public class WorkerResponse
+        {
+            public bool status { get; set; }
+            public List<Worker> data { get; set; }
+            public string error { get; set; }
+        }
+        public class Account
+        {
+            public string account { get; set; }
+            public string unconfirmed_balance { get; set; }
+            public string balance { get; set; }
+            public string hashrate { get; set; }
+            public Dictionary<string, string> avgHashrate { get; set; }
+            public List<Worker> workers { get; set; }
+        }
+
+        public class Worker
+        {
+            public string id { get; set; }
+            public ulong uid { get; set; }
+            public string hashrate { get; set; }
+            public ulong lastshare { get; set; }
+            public uint rating { get; set; }
+            public string h1 { get; set; }
+            public string h3 { get; set; }
+            public string h6 { get; set; }
+            public string h12 { get; set; }
+            public string h24 { get; set; }
+            public uint prevShares { get; set; }
+            public uint termShares { get; set; }
+            public Worker()
+            {
+                id = "NewWorker";
+                uid = 0;
+                hashrate = "0";
+                lastshare = 0;
+                rating = 0;
+                h1 = "0";
+                h3 = "0";
+                h6 = "0";
+                h12 = "0";
+                h24 = "0";
+                prevShares = 0;
+                termShares = 0;
+            }
+
+            public void calcTermShares()
+            {
+                if (rating < prevShares) prevShares = 0;
+                termShares = rating - prevShares;
+            }
+        }
+
+        // Class for general info response
+        public class GeneralInfoResponse
+        {
+            public bool status;
+            public GeneralData data;
+        }
+
+        // Data Class for general info call
+        public class GeneralData
+        {
+            public string balance;
+            public string unconfirmed_balance;
+            public string hashrate;
+            public GenAvgHashrate avghashrate;
+            public GenWorker[] worker;
+        }
+
+        // Worker class for general info call
+        public class GenWorker
+        {
+            public string id { get; set; }
+            public string hashrate { get; set; }
+            public ulong lastShare { get; set; }
+            public string avg_h1 { get; set; }
+            public string avg_h3 { get; set; }
+            public string avg_h6 { get; set; }
+            public string avg_h12 { get; set; }
+            public string avg_h24 { get; set; }
+        }
+
+        // Average hashrate class for general info call
+        public class GenAvgHashrate
+        {
+            public string h1 { get; set; }
+            public string h3 { get; set; }
+            public string h6 { get; set; }
+            public string h12 { get; set; }
+            public string h24 { get; set; }
+        }
+
+        public class PriceResponse
+        {
+            public bool status;
+            public Prices data;
+        }
+        public class Prices
+        {
+            public double price_usd;
+            public double price_btc;
+            public double price_eur;
+            public double price_rur;
+            public double price_CNY;
+            public double price_gbp;
+        }
+
+        public class PaymentResponse
+        {
+            public bool status;
+            public List<Payment> data;
+        }
+        public class Payment
+        {
+            public ulong date;
+            public string txHash;
+            public double amount;
+            public bool confirmed;
+        }
+
+        public class CalculatorResponse
+        {
+            public bool status;
+            public CalculatorData data;
+        }
+
+        public class CalculatorData
+        {
+            public CalculatorOutput minute;
+            public CalculatorOutput hour;
+            public CalculatorOutput day;
+            public CalculatorOutput week;
+            public CalculatorOutput month;
+        }
+
+        public class CalculatorOutput
+        {
+            public double coins;
+            public double bitcoins;
+            public double dollars;
+            public double yuan;
+            public double euros;
+            public double rubles;
+
+        }
+        #endregion
+
+        #region VARIABLES
+        // ---------- VARIABLES ----------
         Nanopool.Account account;// Mining account variable
         List<Nanopool.Worker> workers = new List<Nanopool.Worker>();// List of all workers
         string folderPath = Directory.GetCurrentDirectory() + "/Nanopool";
@@ -21,6 +179,13 @@ namespace ByscuitBotv2.Data
         public string ethUSDValue = "";
         double dETHUSDValue = -1;
 
+        static string nanopoolGenInfo = "https://api.nanopool.org/v1/eth/user/";
+        static string nanopoolWorkers = "https://api.nanopool.org/v1/eth/workers/";
+        static string nanopoolPayments = "https://api.nanopool.org/v1/eth/payments/";
+        static string nanopoolCalculator = "https://api.nanopool.org/v1/eth/approximated_earnings/";
+        #endregion
+
+        // ---------- FUNCTIONS ------------
 
         private void loadWorkers()
         {
@@ -180,96 +345,7 @@ namespace ByscuitBotv2.Data
             return Calculate();
         }
 
-        public class Response
-        {
-            public bool status { get; set; }
-            public Account data { get; set; }
-            public string error { get; set; }
-        }
-        public class WorkerResponse
-        {
-            public bool status { get; set; }
-            public List<Worker> data { get; set; }
-            public string error { get; set; }
-        }
-        public class Account
-        {
-            public string account { get; set; }
-            public string unconfirmed_balance { get; set; }
-            public string balance { get; set; }
-            public string hashrate { get; set; }
-            public Dictionary<string, string> avgHashrate { get; set; }
-            public List<Worker> workers { get; set; }
-        }
 
-        public class Worker
-        {
-            public string id { get; set; }
-            public ulong uid { get; set; }
-            public string hashrate { get; set; }
-            public ulong lastshare { get; set; }
-            public uint rating { get; set; }
-            public string h1 { get; set; }
-            public string h3 { get; set; }
-            public string h6 { get; set; }
-            public string h12 { get; set; }
-            public string h24 { get; set; }
-            public uint prevShares { get; set; }
-            public uint termShares { get; set; }
-            public Worker()
-            {
-                id = "NewWorker";
-                uid = 0;
-                hashrate = "0";
-                lastshare = 0;
-                rating = 0;
-                h1 = "0";
-                h3 = "0";
-                h6 = "0";
-                h12 = "0";
-                h24 = "0";
-                prevShares = 0;
-                termShares = 0;
-            }
-
-            public void calcTermShares()
-            {
-                if (rating < prevShares) prevShares = 0;
-                termShares = rating - prevShares;
-            }
-        }
-
-        public class PriceResponse
-        {
-            public bool status;
-            public Prices data;
-        }
-        public class Prices
-        {
-            public double price_usd;
-            public double price_btc;
-            public double price_eur;
-            public double price_rur;
-            public double price_CNY;
-            public double price_gbp;
-        }
-
-        public class PaymentResponse
-        {
-            public bool status;
-            public List<Payment> data;
-        }
-        public class Payment
-        {
-            public ulong date;
-            public string txHash;
-            public double amount;
-            public bool confirmed;
-        }
-
-        static string nanopoolGenInfo = "https://api.nanopool.org/v1/eth/user/";
-        static string nanopoolWorkers = "https://api.nanopool.org/v1/eth/workers/";
-        static string nanopoolPayments = "https://api.nanopool.org/v1/eth/payments/";
         public static Account GetAccount(string address)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(nanopoolGenInfo + address);
@@ -321,6 +397,9 @@ namespace ByscuitBotv2.Data
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(nanopoolWorkers + address);
             request.ContentType = "application/json; charset=utf-8";
+            request.Method = "GET";
+            request.Timeout = 5000;
+            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Safari/537.36";
             HttpWebResponse response = request.GetResponse() as HttpWebResponse;
             string data = "";
             using (Stream responseStream = response.GetResponseStream())
@@ -357,6 +436,121 @@ namespace ByscuitBotv2.Data
             else return null;
 
             return payments;
+        }
+
+        public static DateTimeOffset GetTimeUntilPayout(string address)
+        {
+            DateTimeOffset result = DateTimeOffset.Now;
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(nanopoolGenInfo + address);
+            request.ContentType = "application/json; charset=utf-8";
+            HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+            string data = "";
+            using (Stream responseStream = response.GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                data = reader.ReadToEnd();
+            }
+
+            GeneralInfoResponse r = JsonConvert.DeserializeObject<GeneralInfoResponse>(data);
+
+            HttpWebRequest request2 = (HttpWebRequest)WebRequest.Create(nanopoolCalculator + r.data.avghashrate.h6);
+            request2.ContentType = "application/json; charset=utf-8";
+            HttpWebResponse response2 = request2.GetResponse() as HttpWebResponse;
+            string data2 = "";
+            using (Stream responseStream = response2.GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                data2 = reader.ReadToEnd();
+            }
+
+            CalculatorResponse r2 = JsonConvert.DeserializeObject<CalculatorResponse>(data2);
+            // Get the total amount of coins in wallet
+            // Compare to week/day/hour/minute
+            // If calculator amount is more than 0.1 ETH then move to next day/hour/minute
+            // Continue until 0.1 Threshold is made then print time
+
+            double walletBalance = double.Parse(r.data.balance);
+            double weekCoins = r2.data.week.coins;
+            double monthCoins = r2.data.month.coins;
+            double dayCoins = r2.data.day.coins;
+            double hourCoins = r2.data.hour.coins;
+            double minuteCoins = r2.data.minute.coins;
+            double payoutThreshold = 0.1;
+            if (walletBalance + monthCoins < payoutThreshold)
+            {
+                // Only do monthly tests since we dont care about days if its going to be greater than a month
+                result = result.AddMonths(1);
+                double testBal = walletBalance + monthCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    testBal += monthCoins;
+                    result = result.AddMonths(1);
+                }
+            }
+            else if (walletBalance + dayCoins < payoutThreshold)
+            {
+                result = result.AddDays(1);
+                double testBal = walletBalance + dayCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    if (testBal + dayCoins < payoutThreshold)
+                    {
+                        testBal += dayCoins;
+                        result = result.AddDays(1);
+                    }
+                    else if (testBal + hourCoins < payoutThreshold)
+                    {
+                        testBal += hourCoins;
+                        result = result.AddHours(1);
+                    }
+                    else if (testBal + minuteCoins < payoutThreshold)
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                    else
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                }
+            }
+            else if (walletBalance + hourCoins < payoutThreshold)
+            {
+                result = result.AddHours(1);
+                double testBal = walletBalance + hourCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    if (testBal + hourCoins < payoutThreshold)
+                    {
+                        testBal += hourCoins;
+                        result = result.AddHours(1);
+                    }
+                    else if (testBal + minuteCoins < payoutThreshold)
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                    else
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                }
+            }
+            else
+            {
+                // Check for the minutes lefts
+                result = result.AddMinutes(1);
+                double testBal = walletBalance + minuteCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    testBal += minuteCoins;
+                    result = result.AddMinutes(1);
+                }
+            }
+            return result;
         }
     }
 }
