@@ -20,11 +20,14 @@ namespace ByscuitBotv2.Modules
 {
     public class ByscComs : ModuleBase<SocketCommandContext>
     {
-        public static string CONTRACT_ADDRESS = "0xDaDa9E1cCB78Dbf2586E29B4648b8cA7e5A09a27";
-        public static string POOL_ADDRESS = "0xA10106F786610D0CF05796b5F13aF7724A1faC34";
+        public static string CONTRACT_ADDRESS = "0x8926E6a13B628947b440d0a820C8496fC728a14A";
+        public static string POOL_ADDRESS = "0xE4a555DAF0c71aBeF7b2d725EEFAe41deaD4D8dD";
         static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
-        public static string CURRENT_NET = TEST_NET; // Set the network to work on here
+        public static string CURRENT_NET = MAIN_NET; // Set the network to work on here
+
+        public decimal byscBNBValue = 871596;
+
         #region internal token interaction
         // RECODE ALL SO IT WILL BE USED FOR INTERNAL TRANSFERS
         [Command("Wallet")]
@@ -37,8 +40,10 @@ namespace ByscuitBotv2.Modules
             Account account = CreditsSystem.GetAccount(user);
             EmbedBuilder embed = new EmbedBuilder();
             if (account == null) account = CreditsSystem.AddUser(user);
-            double ETHUSDValue = Nanopool.GetPrices().price_usd;
-            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+
+            string strBNBValue = BinanceWallet.BinanceAPI.GetUSDPairing();
+            double BNBValue = double.Parse(strBNBValue);
+            decimal BYSCUSDValue = (decimal)BNBValue/ byscBNBValue;
             embed.WithAuthor("Byscoin Wallet", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
@@ -113,8 +118,9 @@ namespace ByscuitBotv2.Modules
             if (account == null) account = CreditsSystem.AddUser(user);
             if (receipientAccount == null) receipientAccount = CreditsSystem.AddUser(receipient);
 
-            double ETHUSDValue = Nanopool.GetPrices().price_usd;
-            decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+            string strBNBValue = BinanceWallet.BinanceAPI.GetUSDPairing();
+            double BNBValue = double.Parse(strBNBValue);
+            decimal BYSCUSDValue = (decimal)BNBValue / byscBNBValue;
 
             decimal byscAmount = 0;
             bool dollarValue = false;
@@ -151,7 +157,6 @@ namespace ByscuitBotv2.Modules
         [Summary("Create a deposit claim and show deposit address for Byscoin wallet (MUST PUT ADDRESS YOU'RE DEPOSITTING FROM)- Usage: {0}Deposit <address>")]
         public async Task Deposit([Remainder] string address = "")
         {
-
             Nethereum.Util.AddressUtil addressUtil = new Nethereum.Util.AddressUtil();
             if (!addressUtil.IsValidEthereumAddressHexFormat(address) || !addressUtil.IsValidAddressLength(address)
                 || !addressUtil.IsNotAnEmptyAddress(address))
@@ -254,6 +259,16 @@ namespace ByscuitBotv2.Modules
         {
             Nanopool nanopool = new Nanopool();
             string result = nanopool.BalanceCheck();
+            TimeSpan timeleft = Nanopool.GetTimeUntilPayout(Nanopool.ADDRESS).Subtract(DateTimeOffset.Now);
+            double daysleft = timeleft.TotalDays;
+            double hoursleft = timeleft.TotalHours;
+            double minutesleft = timeleft.TotalMinutes;
+            result += "\n**_";
+            if (daysleft > 30) result += $"About {Math.Round(daysleft / 30.0f)} month(s) to reach payout";
+            else if (daysleft > 0) result += $"About {Math.Round(daysleft)} day(s) to reach payout";
+            else if (hoursleft > 0) result += $"About {Math.Round(hoursleft)} hour(s) to reach payout";
+            else if (minutesleft > 0) result += $"About {Math.Round(minutesleft)} minute(s) to reach payout";
+            result += "_**";
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithAuthor("Nanopool Stats", Context.Guild.IconUrl);
             embed.WithColor(36, 122, 191);
