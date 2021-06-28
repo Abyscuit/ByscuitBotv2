@@ -21,7 +21,7 @@ namespace ByscuitBotv2.Data
     {
         static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
-        static string CURRENT_NET = TEST_NET;
+        static string CURRENT_NET = MAIN_NET;
         public static Web3 web3 = new Web3(CURRENT_NET);
         static Random random = new Random();
 
@@ -159,7 +159,6 @@ namespace ByscuitBotv2.Data
             }
         }
 
-
         public class BinanceAPI
         {
             static string url = "https://api.binance.com";
@@ -168,7 +167,23 @@ namespace ByscuitBotv2.Data
             public static string GetETHPairing()
             {
 
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + avgPrice+"?symbol=BNBETH");
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + avgPrice + "?symbol=BNBETH");
+                request.ContentType = "application/json; charset=utf-8";
+                HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+                string data = "";
+                using (Stream responseStream = response.GetResponseStream())
+                {
+                    StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                    data = reader.ReadToEnd();
+                }
+
+                BinanceResponse r = JsonConvert.DeserializeObject<BinanceResponse>(data);
+                return r.price;
+            }
+            public static string GetUSDPairing()
+            {
+
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + avgPrice + "?symbol=BNBUSDT");
                 request.ContentType = "application/json; charset=utf-8";
                 HttpWebResponse response = request.GetResponse() as HttpWebResponse;
                 string data = "";
@@ -188,5 +203,6 @@ namespace ByscuitBotv2.Data
                 public string price;
             }
         }
+
     }
 }

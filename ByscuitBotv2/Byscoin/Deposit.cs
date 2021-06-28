@@ -71,7 +71,7 @@ namespace ByscuitBotv2.Byscoin
             string BSCSCAN_API_ENDPOINT = "https://api.bscscan.com/api?module=account&action=tokentx&address=" + ByscComs.POOL_ADDRESS + "&startblock=0&endblock=92500000&sort=asc&apikey=" + Program.config.BSCSCAN_API_KEY;
             string BSCSCANTEST_API_ENDPOINT = "https://api-testnet.bscscan.com/api?module=account&action=tokentx&address=" + ByscComs.POOL_ADDRESS + "&startblock=0&endblock=92500000&sort=asc&apikey=" + Program.config.BSCSCAN_API_KEY;
             List<DepositClaim> toRemove = new List<DepositClaim>();
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(BSCSCANTEST_API_ENDPOINT);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(BSCSCAN_API_ENDPOINT);
             request.ContentType = "application/json; charset=utf-8";
             request.Method = "GET";
             request.Timeout = 5000;
