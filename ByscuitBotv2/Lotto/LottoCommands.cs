@@ -50,8 +50,10 @@ namespace ByscuitBotv2.Lotto
                 }
                 if (failed) return;
                 entry.discordID = Context.User.Id;
-                double ETHUSDValue = Nanopool.GetPrices().price_usd;
-                decimal BYSCUSDValue = (decimal)ETHUSDValue / 1000000000m;
+                decimal byscBNBValue = 871596;
+                string strBNBValue = BinanceWallet.BinanceAPI.GetUSDPairing();
+                double BNBValue = double.Parse(strBNBValue);
+                decimal BYSCUSDValue = (decimal)BNBValue / byscBNBValue;
                 LottoSystem.AddEntry(entry);
                 int userEntries = LottoSystem.GetUserEntries(user.Id);
                 EmbedBuilder embed = new EmbedBuilder();
