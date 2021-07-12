@@ -264,10 +264,17 @@ namespace ByscuitBotv2.Modules
             double hoursleft = timeleft.TotalHours;
             double minutesleft = timeleft.TotalMinutes;
             result += "\n**_";
-            if (daysleft > 30) result += $"About {Math.Round(daysleft / 30.0f)} month(s) to reach payout";
-            else if (daysleft > 0) result += $"About {Math.Round(daysleft)} day(s) to reach payout";
-            else if (hoursleft > 0) result += $"About {Math.Round(hoursleft)} hour(s) to reach payout";
-            else if (minutesleft > 0) result += $"About {Math.Round(minutesleft)} minute(s) to reach payout";
+            string strPayMsg = "About {0} to reach payout";
+            string strPayTime = "";
+            if (daysleft > 30) strPayTime += $"{Math.Round(daysleft / 30.0f)} month(s)";
+            else if (daysleft >= 1) strPayTime += $"{Math.Round(daysleft)} day(s)";
+            else
+            {
+                if (hoursleft >= 1) strPayTime += $"{Math.Round(hoursleft)} hour(s) ";
+                if (minutesleft > 0) strPayTime += $"{Math.Round(minutesleft % 60)} minute(s)";
+            }
+            strPayMsg = string.Format(strPayMsg, strPayTime);
+            result += strPayMsg;
             result += "_**";
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithAuthor("Nanopool Stats", Context.Guild.IconUrl);
