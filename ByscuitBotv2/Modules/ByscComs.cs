@@ -26,7 +26,7 @@ namespace ByscuitBotv2.Modules
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
         public static string CURRENT_NET = MAIN_NET; // Set the network to work on here
 
-        public decimal byscBNBValue = 871596;
+        public decimal byscBNBValue = 873790;
 
         #region internal token interaction
         // RECODE ALL SO IT WILL BE USED FOR INTERNAL TRANSFERS
@@ -264,7 +264,7 @@ namespace ByscuitBotv2.Modules
             double hoursleft = timeleft.TotalHours;
             double minutesleft = timeleft.TotalMinutes;
             result += "\n**_";
-            string strPayMsg = "About {0} to reach payout";
+            string strPayMsg = "About {0} to reach {1} ETH payout";
             string strPayTime = "";
             if (daysleft > 30) strPayTime += $"{Math.Round(daysleft / 30.0f)} month(s)";
             else if (daysleft >= 1) strPayTime += $"{Math.Round(daysleft)} day(s)";
@@ -273,14 +273,14 @@ namespace ByscuitBotv2.Modules
                 if (hoursleft >= 1) strPayTime += $"{Math.Round(hoursleft)} hour(s) ";
                 if (minutesleft > 0) strPayTime += $"{Math.Round(minutesleft % 60)} minute(s)";
             }
-            strPayMsg = string.Format(strPayMsg, strPayTime);
+            strPayMsg = string.Format(strPayMsg, strPayTime, Nanopool.payoutThreshold);
             result += strPayMsg;
             result += "_**";
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithAuthor("Nanopool Stats", Context.Guild.IconUrl);
             embed.WithColor(36, 122, 191);
             embed.Description = result;
-            embed.WithFooter(new EmbedFooterBuilder() { Text = $"ETH/USD Value: {nanopool.ethUSDValue} | BNB/ETH Value: {BinanceWallet.BinanceAPI.GetETHPairing()}" });
+            embed.WithFooter(new EmbedFooterBuilder() { Text = $"ETH/USD Value: {nanopool.ethUSDValue} | Hashrate: {nanopool.account.avgHashrate["h6"]} MH/s" });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
 
