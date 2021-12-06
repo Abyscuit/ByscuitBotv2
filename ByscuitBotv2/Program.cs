@@ -51,7 +51,6 @@ namespace ByscuitBotv2
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 AlwaysDownloadUsers = true // Enable Server Member Intent in Discord API Settings
             });
-            
 
 
             client.Log += Client_Log;
