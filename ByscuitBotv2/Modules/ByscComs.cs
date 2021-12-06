@@ -264,7 +264,7 @@ namespace ByscuitBotv2.Modules
             double hoursleft = timeleft.TotalHours;
             double minutesleft = timeleft.TotalMinutes;
             result += "\n**_";
-            string strPayMsg = "About {0} to reach {1} ETH payout";
+            string strPayMsg = "About {0} to reach {1:N1} ETH payout";
             string strPayTime = "";
             if (daysleft > 30) strPayTime += $"{Math.Round(daysleft / 30.0f)} month(s)";
             else if (daysleft >= 1) strPayTime += $"{Math.Round(daysleft)} day(s)";
@@ -280,7 +280,7 @@ namespace ByscuitBotv2.Modules
             embed.WithAuthor("Nanopool Stats", Context.Guild.IconUrl);
             embed.WithColor(36, 122, 191);
             embed.Description = result;
-            embed.WithFooter(new EmbedFooterBuilder() { Text = $"ETH/USD Value: {nanopool.ethUSDValue} | Hashrate: {nanopool.account.avgHashrate["h6"]} MH/s" });
+            embed.WithFooter(new EmbedFooterBuilder() { Text = $"ETH/USD Value: {nanopool.ethUSDValue} | Hashrate: {nanopool.account.hashrate} MH/s" });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
 
@@ -299,9 +299,30 @@ namespace ByscuitBotv2.Modules
             embed.WithAuthor($"Official Nanopool Payout {DateTime.Now.ToLocalTime().ToString("M/dd/yyyy")}", Context.Guild.IconUrl);
             embed.WithColor(36, 122, 191);
             embed.Description = result;
-            embed.WithFooter(new EmbedFooterBuilder() { Text = $"ETH/USD Value: {nanopool.ethUSDValue} | BNB/ETH Value: {BinanceWallet.BinanceAPI.GetETHPairing()}" });
+            embed.WithFooter(new EmbedFooterBuilder() { Text = $"ETH/USD Value: {nanopool.ethUSDValue}" });
             await Context.Channel.SendMessageAsync(minerRole.Mention, false, embed.Build());
         }
+
+        [Command("ChangePayout")]
+        [Alias("changepay", "editpayout", "editnano")]
+        [Summary("Change the current nanopool payout threshold for the miners - Usage: {0}ChangePayout")]
+        [RequireOwner()]
+        public async Task ChangePayout(float newThreshold = -1, [Remainder] string text = "")
+        {
+            ulong minerRoleID = 832412957396303892; // Role for miners
+            SocketRole minerRole = Context.Guild.GetRole(minerRoleID);
+            if(newThreshold <= -1)
+            {
+                await Context.Channel.SendMessageAsync($"New payout cannot be negative!");
+                return;
+            }
+            Program.config.NANOPOOL_PAYOUT = newThreshold;
+            Nanopool.payoutThreshold = Program.config.NANOPOOL_PAYOUT;
+            Program.config.SaveConfig();
+            await Context.Channel.SendMessageAsync( $"{minerRole.Mention}\n`New payout set to {newThreshold:N1} ETH`");
+            await GetNanopoolInfo();
+        }
+
         #endregion
 
         #region Byscoin
