@@ -292,10 +292,10 @@ namespace ByscuitBotv2.Data
             // NAME XX.XX% (X.XXXXXXXX ETH | X.XXXXXXXX BNB | $XX.XX) | (Shares XX)
             //
             // TOTAL X.XXXXXXXXXX ETH (X.XXXXXXXX BNB | $XXX.XXUSD)
-            string BNBETH = BinanceWallet.BinanceAPI.GetETHPairing();
-            double BNBETH_PRICE = double.Parse(BNBETH);
-            string ratio = string.Format("**Total (Shares {0}):**\n", totalTermShares);
-            double totalBNB = 0;
+            //string BNBETH = BinanceWallet.BinanceAPI.GetETHPairing();
+            //double BNBETH_PRICE = double.Parse(BNBETH);
+            string ratio = string.Format("__**Total (Shares {0:N0}):**__\n\n", totalTermShares);
+            //double totalBNB = 0;
             foreach (Nanopool.Worker miner in workers)
             {
                 // Output the percent of each miner
@@ -304,15 +304,16 @@ namespace ByscuitBotv2.Data
                 double termRate = termPercent * 100;
                 double termAmount = bal * termPercent;
                 double termUSDVal = termAmount * dETHUSDValue;
-                double bnbAmount = termAmount / BNBETH_PRICE; // X.XXXXX ETH = 1 BNB | divide out the price per BNB
-                totalBNB += bnbAmount;
-                ratio += string.Format("{3}: {0:P} ({1:N8} ETH | ${2:N2}) | ({4} Shares | {5} MH/s)\n", termRate / 100, termAmount,
+                //double bnbAmount = termAmount / BNBETH_PRICE; // X.XXXXX ETH = 1 BNB | divide out the price per BNB
+                //totalBNB += bnbAmount;
+                ratio += string.Format("_**{3}**_: {0:P} ({1:N8} ETH | ${2:N2}) | ({4:N0} Shares | {5} MH/s)\n", termRate / 100, termAmount,
                     termUSDVal, miner.id, miner.termShares, miner.hashrate);
             }
-            double bnbBal = double.Parse($"{balance:N8}") / BNBETH_PRICE;
-            if (totalBNB != bnbBal)
+            //double bnbBal = double.Parse($"{balance:N8}") / BNBETH_PRICE;
+            /*if (totalBNB != bnbBal)
                 Console.WriteLine("balance doesnt add up" +
                 $"Total BNB added: {totalBNB:N8} | Total BNB Mult from Balance: {bnbBal:N8}");
+                */
             decimal gwei = 0.000000001m; // Byscuit coin price
             decimal totalByscuitCoinsMinted = decimal.Parse(balance) / gwei;
             Console.WriteLine($"Total Byscuit Coins Minted: {totalByscuitCoinsMinted}");
@@ -384,6 +385,7 @@ namespace ByscuitBotv2.Data
             using (Stream responseStream = response.GetResponseStream())
             {
                 StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                //Console.WriteLine($"Stream Reader: {reader.}")
                 data = reader.ReadToEnd();
             }
 
