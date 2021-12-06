@@ -1,4 +1,5 @@
-﻿using ByscuitBotv2.Byscoin;
+﻿using ByscuitBotv2;
+using ByscuitBotv2.Byscoin;
 using ByscuitBotv2.Data;
 using ByscuitBotv2.Lotto;
 using ByscuitBotv2.Modules;
@@ -71,7 +72,7 @@ namespace byscuitBot
         public static List<SocketGuildUser> twoMatch = new List<SocketGuildUser>();
         private Task Client_LatencyUpdated(int arg1, int arg2)
         {
-            
+            /*
             // Posture Check
             SocketGuild Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
             if (Byscuits == null) return Task.CompletedTask;
@@ -199,10 +200,11 @@ namespace byscuitBot
                 CreditsSystem.SaveFile();
                 lottoDay = DateTime.Now.Day;
             }
+            */
             // Check if any new deposits are coming in
             // Might want to create a new thread for this
             if (Deposit.NEW_DEPOSITS) {
-                printConsole($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
+                printLOG($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
                 Deposit.CheckDepositClaims();
             }
             return Task.CompletedTask;
@@ -210,7 +212,7 @@ namespace byscuitBot
 
         private Task Client_GuildMemberUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
         {
-            printConsole($"GuildMember Updated | User 1: {arg1} | User 2: {arg2}");
+            printDEBUG($"GuildMember Updated | User 1: {arg1} | User 2: {arg2}");
             if(arg1.Id == 215535755727077379) // FubiRock nickname check
                 if (arg2.Nickname != "FaggotRock") arg2.ModifyAsync(m => { m.Nickname = "FaggotRock"; }) ;
             
@@ -235,20 +237,20 @@ namespace byscuitBot
                     // Mute check
                     if (!vState2.IsMuted && !vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, true, true);//Start counting if unmuted
                     else if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false, true);// Stop counting if muted
-                    printConsole($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
-                    printConsole($"{user} Channel joined: {guild.Name}/{vState2.VoiceChannel}");
+                    printLOG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
+                    printLOG($"{user} Channel joined: {guild.Name}/{vState2.VoiceChannel}");
                 }
                 else if (vState2.VoiceChannel == null)// If user leaves the channel
                 {
                     Accounts.UpdateUser(user.Id, false);// Stop the counting
-                    printConsole($"{user} Channel left: {guild.Name}/{vState1.VoiceChannel}");
+                    printLOG($"{user} Channel left: {guild.Name}/{vState1.VoiceChannel}");
                 }
             }
             else// If the user deafens/mutes but doesnt change channels
             {   // Mute check
                 if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false);// Stop counting if muted
                 else Accounts.UpdateUser(user.Id, true);//Start counting if unmuted
-                printConsole($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
+                printLOG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
             }
 
             if (guild == null) return Task.CompletedTask;
@@ -256,7 +258,7 @@ namespace byscuitBot
             if(vState2.VoiceChannel == guild.AFKChannel)
             {
                 Accounts.UpdateUser(user.Id, false);//Stop counting if AFK
-                printConsole($"{user} is in AFK Channel");
+                printLOG($"{user} is in AFK Channel");
             }
 
             // Update user roles
@@ -282,7 +284,7 @@ namespace byscuitBot
                     }
                 }
             }
-            printConsole($"Roles: {strRoles}");
+            printDEBUG($"Roles: {strRoles}");
             if (newRoles) guild.DefaultChannel.SendMessageAsync($"> **{user}**_({user.Id})_ has earned **{strRoles}**!");
 
             return Task.CompletedTask;
@@ -338,7 +340,7 @@ namespace byscuitBot
                     }
                 }
             } 
-            printConsole(embed.Description);
+            printDEBUG(embed.Description);
             if (print) await sChannel.SendMessageAsync("", false, embed.Build());
 
         }
@@ -387,6 +389,8 @@ namespace byscuitBot
             CashoutSystem.Load();
             LottoSystem.Load();
             Deposit.Load();
+            Nanopool.payoutThreshold = Program.config.NANOPOOL_PAYOUT;
+            Utility.SetDebugLevel(Program.config.DEBUG_LEVEL);
             return Task.CompletedTask;
         }
 
@@ -404,7 +408,7 @@ namespace byscuitBot
             if (!disconnected)
             {
                 printConsole("Connected to discord");
-                printConsole("User: " + user);
+                printLOG("User: " + user);
                 IEnumerator<SocketGuild> lGuilds = client.Guilds.GetEnumerator();
                 //string guilds = (lGuilds.MoveNext()) ? "" + lGuilds.Current.Id : "";
                 
@@ -616,15 +620,23 @@ namespace byscuitBot
                 if (category.Name.ToLower().Contains(name.ToLower())) return true;
             return false;
         }
-
-
-        /// <summary>
-        ///Print to console with the current timestamp
-        /// </summary>
-        /// <param name="message">The message to be sent</param>
+        
         public void printConsole(string message)
         {
-            Console.WriteLine(DateTime.Now.ToLocalTime() + " | " + message);
+            Utility.printConsole(message);
+        }
+        
+        public void printLOG(string message)
+        {
+            Utility.printLOG(message);
+        }
+        public void printERROR(string message)
+        {
+            Utility.printERROR(message);
+        }
+        public void printDEBUG(string message)
+        {
+            Utility.printDEBUG(message);
         }
     }
 }
