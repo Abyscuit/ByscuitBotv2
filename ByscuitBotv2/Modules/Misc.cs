@@ -33,7 +33,7 @@ namespace ByscuitBotv2.Modules
             foreach (CommandInfo cmd in cmds)
             {
                 if (cmd.Name.ToLower() == "help") continue; // Skip if the cmd is help
-                if (cmd.Name.ToLower().Contains("finishcashout") || cmd.Name.ToLower().Contains("payout")) continue;
+                //if (cmd.Name.ToLower().Contains("finishcashout") || cmd.Name.ToLower().Contains("payout")) continue;
                 /// Conditionals for showing commands based
                 /// on User privileges
                 
