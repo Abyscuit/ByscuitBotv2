@@ -329,6 +329,7 @@
     <Compile Include="Data\Roles.cs" />
     <Compile Include="Data\SmartContract.cs" />
     <Compile Include="Data\Spam.cs" />
+    <Compile Include="Data\WorkerState.cs" />
     <Compile Include="Lotto\LottoCommands.cs" />
     <Compile Include="Lotto\LottoEntry.cs" />
     <Compile Include="Lotto\LottoSystem.cs" />

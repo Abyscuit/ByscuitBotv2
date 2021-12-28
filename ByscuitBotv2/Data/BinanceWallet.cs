@@ -14,6 +14,7 @@ using NBitcoin;
 using Nethereum.RPC.Eth.DTOs;
 using System.Net;
 using Nethereum.Contracts;
+using ByscuitBotv2.Modules;
 
 namespace ByscuitBotv2.Data
 {
@@ -70,11 +71,11 @@ namespace ByscuitBotv2.Data
 
             public async Task<decimal> GetBalance()
             {
-                Console.WriteLine($"Address: {Address}");
+                Utility.printDEBUG($"Address: {Address}");
                 BigInteger bal = await web3.Eth.GetBalance.SendRequestAsync(Address);
-                Console.WriteLine($"Balance (GWEI): {bal}");
+                Utility.printDEBUG($"Balance (GWEI): {bal}");
                 decimal result = Web3.Convert.FromWei(bal);
-                Console.WriteLine($"Balance (BNB): {result}");
+                Utility.printDEBUG($"Balance (BNB): {result}");
                 return result;
             }
         }
@@ -116,8 +117,8 @@ namespace ByscuitBotv2.Data
             if (!File.Exists(fullpath))
             {
                 File.WriteAllText(fullpath, JsonConvert.SerializeObject(accounts, Formatting.Indented));
-                string text = DateTime.Now + $" | Generated new file for binance wallets: {fullpath}";
-                Console.WriteLine(text);
+                string text = $"Generated new file for binance wallets: {fullpath}";
+                Utility.printConsole(text);
             }
             else
             {

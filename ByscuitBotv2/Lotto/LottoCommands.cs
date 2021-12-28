@@ -9,6 +9,7 @@ using Discord;
 using Discord.WebSocket;
 using System.Threading;
 using ByscuitBotv2.Data;
+using ByscuitBotv2.Modules;
 
 namespace ByscuitBotv2.Lotto
 {
@@ -24,7 +25,7 @@ namespace ByscuitBotv2.Lotto
             await Context.Message.DeleteAsync();
             if (bgThread != null)
             {
-                if (bgThread.ThreadState == ThreadState.Running) Console.WriteLine("Background Thread is still running!");
+                if (bgThread.ThreadState == ThreadState.Running) Utility.printDEBUG("Background Thread is still running!");
             }
             string[] numArr = numbers.Split(' ');
             if (numbers == "" || numArr.Length != 4)

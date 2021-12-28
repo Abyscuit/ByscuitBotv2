@@ -62,6 +62,7 @@ namespace byscuitBot
             this.client.LoggedOut += Client_LoggedOut;
             this.client.LoggedIn += Client_LoggedIn;
             this.client.Disconnected += Client_Disconnected;
+            
         }
         int postureTime = DateTime.Now.Hour / 2;
         RestUserMessage sentMessage = null;
@@ -204,7 +205,7 @@ namespace byscuitBot
             // Check if any new deposits are coming in
             // Might want to create a new thread for this
             if (Deposit.NEW_DEPOSITS) {
-                printLOG($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
+                printDEBUG($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
                 Deposit.CheckDepositClaims();
             }
             return Task.CompletedTask;
@@ -237,20 +238,20 @@ namespace byscuitBot
                     // Mute check
                     if (!vState2.IsMuted && !vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, true, true);//Start counting if unmuted
                     else if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false, true);// Stop counting if muted
-                    printLOG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
-                    printLOG($"{user} Channel joined: {guild.Name}/{vState2.VoiceChannel}");
+                    printDEBUG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
+                    printDEBUG($"{user} Channel joined: {guild.Name}/{vState2.VoiceChannel}");
                 }
                 else if (vState2.VoiceChannel == null)// If user leaves the channel
                 {
                     Accounts.UpdateUser(user.Id, false);// Stop the counting
-                    printLOG($"{user} Channel left: {guild.Name}/{vState1.VoiceChannel}");
+                    printDEBUG($"{user} Channel left: {guild.Name}/{vState1.VoiceChannel}");
                 }
             }
             else// If the user deafens/mutes but doesnt change channels
             {   // Mute check
                 if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false);// Stop counting if muted
                 else Accounts.UpdateUser(user.Id, true);//Start counting if unmuted
-                printLOG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
+                printDEBUG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
             }
 
             if (guild == null) return Task.CompletedTask;
@@ -258,7 +259,7 @@ namespace byscuitBot
             if(vState2.VoiceChannel == guild.AFKChannel)
             {
                 Accounts.UpdateUser(user.Id, false);//Stop counting if AFK
-                printLOG($"{user} is in AFK Channel");
+                printDEBUG($"{user} is in AFK Channel");
             }
 
             // Update user roles
@@ -389,6 +390,7 @@ namespace byscuitBot
             CashoutSystem.Load();
             LottoSystem.Load();
             Deposit.Load();
+            WorkerStates.Load();
             Nanopool.payoutThreshold = Program.config.NANOPOOL_PAYOUT;
             Utility.SetDebugLevel(Program.config.DEBUG_LEVEL);
             return Task.CompletedTask;
@@ -407,8 +409,7 @@ namespace byscuitBot
             user = client.CurrentUser.ToString();
             if (!disconnected)
             {
-                printConsole("Connected to discord");
-                printLOG("User: " + user);
+                printConsole($"Connected to discord as {user}");
                 IEnumerator<SocketGuild> lGuilds = client.Guilds.GetEnumerator();
                 //string guilds = (lGuilds.MoveNext()) ? "" + lGuilds.Current.Id : "";
                 
@@ -472,8 +473,8 @@ namespace byscuitBot
                     embed.WithCurrentTimestamp();
 
                     await context.Channel.SendMessageAsync(embed: embed.Build());
-                    Console.WriteLine(result.ErrorReason);
-                    Console.WriteLine(result.Error);
+                    printERROR(result.ErrorReason);
+                    printERROR(result.Error);
                 }
             }
             else // Non-Command messages
@@ -620,23 +621,75 @@ namespace byscuitBot
                 if (category.Name.ToLower().Contains(name.ToLower())) return true;
             return false;
         }
-        
+
+        #region Console Printing Functions
+        /// <summary>
+        /// Print text to the console with timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
         public void printConsole(string message)
         {
             Utility.printConsole(message);
         }
-        
-        public void printLOG(string message)
+        /// <summary>
+        /// Print object to the console with timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public void printConsole(object obj)
         {
-            Utility.printLOG(message);
+            Utility.printConsole(obj);
         }
+
+        /// <summary>
+        /// Print text to the console as an error with timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
         public void printERROR(string message)
         {
             Utility.printERROR(message);
         }
+        /// <summary>
+        /// Print object to the console as an error with timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public void printERROR(object obj)
+        {
+            Utility.printERROR(obj);
+        }
+
+        /// <summary>
+        /// Print text to the console with the debug tag and timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
         public void printDEBUG(string message)
         {
             Utility.printDEBUG(message);
         }
+        /// <summary>
+        /// Print object to the console with the debug tag and timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public void printDEBUG(object obj)
+        {
+            Utility.printDEBUG(obj);
+        }
+
+        /// <summary>
+        /// Print text to the console with the log tag and timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
+        public void printLOG(string message)
+        {
+            Utility.printLOG(message);
+        }
+        /// <summary>
+        /// Print object to the console with the log tag and timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public void printLOG(object obj)
+        {
+            Utility.printLOG(obj);
+        }
+        #endregion
     }
 }

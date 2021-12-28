@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ByscuitBotv2.Modules;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -92,8 +93,8 @@ namespace ByscuitBotv2.Data
             if (!File.Exists(fullpath))
             {
                 File.WriteAllText(fullpath, JsonConvert.SerializeObject(accounts, Formatting.Indented));
-                string text = DateTime.Now + $" | Generated new file for accounts: {fullpath}";
-                Console.WriteLine(text);
+                string text = $"Generated new file for accounts: {fullpath}";
+                Utility.printConsole(text);
             }
             else
             {

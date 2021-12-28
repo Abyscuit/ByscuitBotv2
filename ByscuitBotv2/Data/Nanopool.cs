@@ -245,7 +245,7 @@ namespace ByscuitBotv2.Data
                 foreach (Nanopool.Worker currentMiner in workers)
                     if (worker.id == currentMiner.id) currentMiner.prevShares = worker.rating;// Place rating of the saved data to the previous shares
 
-            Console.WriteLine("Successfully loaded file " + fileName);
+            Utility.printDEBUG("Successfully loaded file " + fileName);
         }
 
         public void SaveFile()
@@ -255,7 +255,7 @@ namespace ByscuitBotv2.Data
             string file = folderPath + "/" + fileName;
             string json = JsonConvert.SerializeObject(workers, Formatting.Indented);
             File.WriteAllText(file, json);
-            Console.WriteLine("Successfully saved Nanopool data");
+            Utility.printConsole("Successfully saved Nanopool data");
         }
 
         public void FolderExist()

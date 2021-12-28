@@ -361,7 +361,7 @@ namespace ByscuitBotv2.Modules
                 if (steam.personaname != steamAccounts[i].Username)
                 {
                     ncCount++;
-                    Console.WriteLine($"Changed username {steamAccounts[i].Username} to {steam.personaname}");
+                    Utility.printDEBUG($"Changed username {steamAccounts[i].Username} to {steam.personaname}");
                 }
                 steamAccounts[i].Username = steam.personaname;
                 steam.Disconnect();

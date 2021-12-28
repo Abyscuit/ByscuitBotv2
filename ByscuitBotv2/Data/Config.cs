@@ -20,7 +20,10 @@ namespace ByscuitBotv2.Data
         public string TWITCH_SECRET = "";
         public string BSCSCAN_API_KEY = "";
         public float NANOPOOL_PAYOUT = 0.4f; // Default level 0.4f
-        public uint DEBUG_LEVEL = 99; // Default level 0
+
+        // Log Levels
+        // 0 = Critical, 1 = Error, 2 = Warning, 3 = Info, 4 = Verbose, 5 = Debug
+        public Discord.LogSeverity DEBUG_LEVEL = Discord.LogSeverity.Critical; // Default level 0 
 
         public static Config LoadConfig()
         {
@@ -32,8 +35,8 @@ namespace ByscuitBotv2.Data
             if (!File.Exists(fullpath))
             {
                 File.WriteAllText(fullpath, JsonConvert.SerializeObject(c, Formatting.Indented));
-                string text = DateTime.Now + $" | Config not found configured! Please fix in {fullpath} and restart!";
-                Console.WriteLine(text);
+                string text = $"Config not found configured! Please fix in {fullpath} and restart!";
+                Utility.printConsole(text);
                 Console.ReadLine();
                 Environment.Exit(0);
             }
@@ -46,7 +49,7 @@ namespace ByscuitBotv2.Data
 
         public void CheckDebugLevel()
         {
-            if (DEBUG_LEVEL == 99)
+            if (DEBUG_LEVEL > Discord.LogSeverity.Debug)
             {
                 DEBUG_LEVEL = 0;
                 SaveConfig();

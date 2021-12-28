@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using ByscuitBotv2.Modules;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -34,8 +35,8 @@ namespace ByscuitBotv2.Data
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             File.WriteAllText(fullpath, JsonConvert.SerializeObject(roles, Formatting.Indented));
-            string text = DateTime.Now + $" | Saved set roles: {fullpath}";
-            Console.WriteLine(text);
+            string text = $"Saved set roles: {fullpath}";
+            Utility.printConsole(text);
         }
 
         public static void Load()
@@ -44,9 +45,10 @@ namespace ByscuitBotv2.Data
             if (!File.Exists(fullpath))
             {
                 File.WriteAllText(fullpath, JsonConvert.SerializeObject(roles, Formatting.Indented));
-                string text = DateTime.Now + $" | Generated new file for roles: {fullpath}\n" +
-                    DateTime.Now + $" | Use the AddRole command to add roles to the config file.";
-                Console.WriteLine(text);
+                string text = $"Generated new file for roles: {fullpath}";
+                Utility.printConsole(text);
+                text = $"Use the AddRole command to add roles to the config file.";
+                Utility.printConsole(text);
             }
             else
             {

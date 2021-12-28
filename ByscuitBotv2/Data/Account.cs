@@ -1,4 +1,5 @@
-﻿using Discord.Rest;
+﻿using ByscuitBotv2.Modules;
+using Discord.Rest;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using System;
@@ -64,14 +65,14 @@ namespace ByscuitBotv2.Data
                     accounts.Add(account);
                     double totaldays = user.JoinedAt.Value.Subtract(DateTime.Now).TotalDays * -1;
 
-                    Console.WriteLine("User: " + (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username));
-                    Console.WriteLine("Total Days: " + totaldays);
+                    Utility.printDEBUG("User: " + (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username));
+                    Utility.printDEBUG("Total Days: " + totaldays);
                     double premiumTime = (user.PremiumSince.HasValue ? user.PremiumSince.Value.Subtract(DateTime.Now).TotalDays * -1 : 0);
-                    Console.WriteLine("Premium Days: " + premiumTime);
-                    Console.WriteLine("Credits: " + account.credits + " | " + string.Format("{0:p}", (account.credits / totalcredits)) + "\n-------------------");
+                    Utility.printDEBUG("Premium Days: " + premiumTime);
+                    Utility.printDEBUG("Credits: " + account.credits + " | " + string.Format("{0:p}", (account.credits / totalcredits)) + "\n-------------------");
                 }
             }).Wait();
-            Console.WriteLine($"Total Credits Supply: {totalcredits:N0}");
+            Utility.printDEBUG($"Total Credits Supply: {totalcredits:N0}");
             SaveFile();
         }
         public static Account AddUser(SocketGuildUser user)
@@ -88,11 +89,11 @@ namespace ByscuitBotv2.Data
             accounts.Add(account);
             double totaldays = user.JoinedAt.Value.Subtract(DateTime.Now).TotalDays * -1;
 
-            Console.WriteLine("User: " + (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username));
-            Console.WriteLine("Total Days: " + totaldays);
+            Utility.printDEBUG("User: " + (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username));
+            Utility.printDEBUG("Total Days: " + totaldays);
             double premiumTime = (user.PremiumSince.HasValue ? user.PremiumSince.Value.Subtract(DateTime.Now).TotalDays * -1 : 0);
-            Console.WriteLine("Premium Days: " + premiumTime);
-            Console.WriteLine("Credits: " + account.credits + " | " + string.Format("{0:p}", (account.credits / totalcredits)) + "\n-------------------");
+            Utility.printDEBUG("Premium Days: " + premiumTime);
+            Utility.printDEBUG("Credits: " + account.credits + " | " + string.Format("{0:p}", (account.credits / totalcredits)) + "\n-------------------");
             SaveFile();
             return account;
         }

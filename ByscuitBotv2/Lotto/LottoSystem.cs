@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ByscuitBotv2.Modules;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,8 +39,8 @@ namespace ByscuitBotv2.Lotto
             {
                 LottoFile lFile = new LottoFile() { LOTTO_POT = LOTTO_POT, LOTTO_ENTRIES = LOTTO_ENTRIES };
                 File.WriteAllText(fullpath, JsonConvert.SerializeObject(lFile, Formatting.Indented));
-                string text = DateTime.Now + $" | Generated new file for Lotto Entries: {fullpath}";
-                Console.WriteLine(text);
+                string text = $"Generated new file for Lotto Entries: {fullpath}";
+                Utility.printConsole(text);
             }
             else
             {

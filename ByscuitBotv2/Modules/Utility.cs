@@ -14,33 +14,87 @@ namespace ByscuitBotv2.Modules
     {
         static Random rand = new Random();
         public static List<string> log = new List<string>();
-        static uint DEBUG_LEVEL = 3; // 0 = OFF, 1 = ERROR, 2 = LOG, 3 = DEBUG || More settings in the future
-        //static string[] DEBUG_LVL_STR = { "OFF", "ERROR", "LOG", "DEBUG" };
 
+        // Log Levels
+        // 0 = Critical, 1 = Error, 2 = Warning, 3 = Info, 4 = Verbose, 5 = Debug
+        static Discord.LogSeverity DEBUG_LEVEL = Discord.LogSeverity.Debug; 
+        static string[] DEBUG_LVL_STR = { "CRITICAL", "ERROR", "WARNING", "INFO", "VERBOSE", "DEBUG" };
+
+        #region Console Printing Functions
         /// <summary>
-        ///Print to console with the current timestamp
+        /// Print text to the console with timestamp.
         /// </summary>
-        /// <param name="message">The message to be sent</param>
+        /// <param name="message">The message to print.</param>
         public static void printConsole(string message)
         {
             string msg = DateTime.Now.ToLocalTime() + " | " + message;
             Console.WriteLine(msg);
             log.Add(msg);
         }
+        /// <summary>
+        /// Print object to the console with timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public static void printConsole(object obj)
+        {
+            string msg = DateTime.Now.ToLocalTime() + " | " + obj.ToString();
+            Console.WriteLine(msg);
+            log.Add(msg);
+        }
+
+        /// <summary>
+        /// Print text to the console as an error with timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
         public static void printERROR(string message)
         {
-            if (DEBUG_LEVEL >= 1) printConsole($"ERROR | {message}");
+            if ((int)DEBUG_LEVEL >= 1) printConsole($"ERROR | {message}");
+        }
+        /// <summary>
+        /// Print object to the console as an error with timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public static void printERROR(object obj)
+        {
+            if ((int)DEBUG_LEVEL >= 1) printConsole($"ERROR | {obj.ToString()}");
         }
 
+        /// <summary>
+        /// Print text to the console with the debug tag and timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
         public static void printDEBUG(string message)
         {
-            if (DEBUG_LEVEL >= 3) printConsole($"DEBUG | {message}");
+            if ((int)DEBUG_LEVEL >= 5) printConsole($"DEBUG | {message}");
         }
-        public static void printLOG(string message)
+        /// <summary>
+        /// Print object to the console with the debug tag and timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public static void printDEBUG(object obj)
         {
-            if (DEBUG_LEVEL >= 2) printConsole($"LOG | {message}");
+            if ((int)DEBUG_LEVEL >= 5) printConsole($"DEBUG | {obj.ToString()}");
         }
 
+        /// <summary>
+        /// Print text to the console with the log tag and timestamp.
+        /// </summary>
+        /// <param name="message">The message to print.</param>
+        public static void printLOG(string message)
+        {
+            if ((int)DEBUG_LEVEL >= 3) printConsole($"INFO | {message}");
+        }
+        /// <summary>
+        /// Print object to the console with the log tag and timestamp.
+        /// </summary>
+        /// <param name="obj">The object to print.</param>
+        public static void printLOG(object obj)
+        {
+            if ((int)DEBUG_LEVEL >= 3) printConsole($"INFO | {obj.ToString()}");
+        }
+        #endregion
+
+        #region Messaging Functions
         public static async Task DirectMessage(SocketGuildUser user, string msg = "")
         {
             // Get or create the Direct channel then send message
@@ -63,6 +117,7 @@ namespace ByscuitBotv2.Modules
             string text = $"{username} was sent a private embedded message";
             printLOG(text);
         }
+        #endregion
 
         public static int RandomNum(int min, int max)
         {
@@ -77,12 +132,15 @@ namespace ByscuitBotv2.Modules
             string saveFile = $"{DateTime.Now.ToString("dd")}";
             string savePath = $"{saveFolder}/{saveFile}";
             if (!Directory.Exists(saveFolder)) Directory.CreateDirectory(saveFolder);
-            string logString = log.Count > 0 ? log[0] : "";
-            for (int i = 1; i < log.Count; i++) { logString += log[i]; }
-            File.WriteAllText(savePath, logString);
+            // string logString = log.Count > 0 ? log[0] : "";
+            // for (int i = 1; i < log.Count; i++) { logString += log[i]; }
+            using (StreamReader sr = new StreamReader(Console.OpenStandardOutput()))
+            {
+                File.WriteAllText(savePath, sr.ReadToEnd());
+            }
         }
 
-        public static void SetDebugLevel(uint dbgLvl)
+        public static void SetDebugLevel(Discord.LogSeverity dbgLvl)
         {
             DEBUG_LEVEL = dbgLvl;
         }

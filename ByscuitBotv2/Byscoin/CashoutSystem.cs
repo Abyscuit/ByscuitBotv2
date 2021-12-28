@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ByscuitBotv2.Modules;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -46,8 +47,8 @@ namespace ByscuitBotv2.Byscoin
             if (!File.Exists(fullpath))
             {
                 File.WriteAllText(fullpath, JsonConvert.SerializeObject(cashoutClaims, Formatting.Indented));
-                string text = DateTime.Now + $" | Generated new file for cashout claims: {fullpath}";
-                Console.WriteLine(text);
+                string text =  $"Generated new file for cashout claims: {fullpath}";
+                Utility.printConsole(text);
             }
             else
             {

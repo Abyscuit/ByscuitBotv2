@@ -1,5 +1,6 @@
 ﻿using byscuitBot;
 using ByscuitBotv2.Data;
+using ByscuitBotv2.Modules;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,12 +47,13 @@ namespace ByscuitBotv2
 
             client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = Discord.LogSeverity.Debug, //change log level if you want
+                LogLevel = config.DEBUG_LEVEL, //change log level in config file
                 ConnectionTimeout = 30000, // 30 second timeout
                 DefaultRetryMode = RetryMode.AlwaysRetry,
                 AlwaysDownloadUsers = true // Enable Server Member Intent in Discord API Settings
             });
 
+            
 
             client.Log += Client_Log;
             client.ReactionAdded += Client_ReactionAdded;
@@ -83,9 +85,8 @@ namespace ByscuitBotv2
 
         public async Task consolePrint(string msg)
         {
-            string text = DateTime.Now + " | " + msg;
-            Console.WriteLine(text);
-            
+            Utility.printConsole(msg);
+            await Task.CompletedTask;
         }
     }
 }

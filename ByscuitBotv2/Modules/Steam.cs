@@ -80,7 +80,7 @@ namespace ByscuitBotv2.Modules
             manager.Subscribe<SteamUser.LoggedOffCallback>(OnLoggedOff);
             manager.Subscribe<SteamApps.LicenseListCallback>(OnLicenseList);
             isRunning = true;
-            Console.WriteLine("Connecting to Steam...");
+            Utility.printDEBUG("Connecting to Steam...");
 
             bAborted = false;
             bConnected = false;
@@ -101,14 +101,14 @@ namespace ByscuitBotv2.Modules
 
         private void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
-            Console.WriteLine("Disconnected from Steam");
+            Utility.printDEBUG("Disconnected from Steam");
 
             isRunning = false;
         }
 
         private void OnConnected(SteamClient.ConnectedCallback callback)
         {
-            Console.WriteLine("Connected to Steam! Logging in '{0}'...", user);
+            Utility.printDEBUG($"Connected to Steam! Logging in '{user}'...");
 
             steamUser.LogOn(new SteamUser.LogOnDetails
             {
@@ -126,22 +126,22 @@ namespace ByscuitBotv2.Modules
                     // then the account we're logging into is SteamGuard protected
                     // see sample 5 for how SteamGuard can be handled
 
-                    Console.WriteLine("Unable to logon to Steam: This account is SteamGuard protected.");
+                    Utility.printDEBUG("Unable to logon to Steam: This account is SteamGuard protected.");
                     
                     isRunning = false;
                     return;
                 }
 
-                Console.WriteLine("Unable to logon to Steam: {0} / {1}", callback.Result, callback.ExtendedResult);
+                Utility.printDEBUG($"Unable to logon to Steam: {callback.Result} / {callback.ExtendedResult}");
 
                 isRunning = false;
                 return;
             }
 
-            Console.WriteLine("Successfully logged on!");
+            Utility.printDEBUG("Successfully logged on!");
             ulong steamID = steamUser.SteamID.ConvertToUInt64();
             personaname = steamFriends.GetPersonaName();
-            Console.WriteLine("Username: {0}", personaname);
+            Utility.printDEBUG($"Username: {personaname}");
 
             // for WebAPIs that require an API key, the key can be specified in the GetInterface function
             using (dynamic steamUserAuth = WebAPI.GetInterface("ISteamUser", "0929AB04644BF6B142E30588D8E54A1F"))
@@ -155,8 +155,8 @@ namespace ByscuitBotv2.Modules
                 {
                     hasVac = bans["VACBanned"].AsBoolean();
                     hasBan = ((bans["NumberOfGameBans"].AsInteger() > 0) || bans["CommunityBan"].AsBoolean());
-                    if (hasVac) Console.WriteLine("Has VAC Ban!");
-                    if (hasBan) Console.WriteLine("Has Potential Game Ban!");
+                    if (hasVac) Utility.printDEBUG("Has VAC Ban!");
+                    if (hasBan) Utility.printDEBUG("Has Potential Game Ban!");
                     //Console.WriteLine("Community Ban: {0}", bans["CommunityBanned"].AsString());
                     //Console.WriteLine("VAC Ban: {0}", bans["VACBanned"].AsString());
                     //Console.WriteLine("Days Since Last Ban: {0}", bans["DaysSinceLastBan"].AsString());
@@ -170,7 +170,7 @@ namespace ByscuitBotv2.Modules
 
         private void OnLoggedOff(SteamUser.LoggedOffCallback callback)
         {
-            Console.WriteLine("Logged off of Steam: {0}", callback.Result);
+            Utility.printDEBUG($"Logged off of Steam: {callback.Result}");
         }
 
         private void OnLicenseList(SteamApps.LicenseListCallback callback)
@@ -193,7 +193,7 @@ namespace ByscuitBotv2.Modules
                     {
                         string appId = appIDs[i].AsString(); 
                         //Console.WriteLine($"Found App ID {appId} in package!");
-                        if (appId == "730") { Console.WriteLine("Found CSGO!"); steamUser.LogOff(); break; }
+                        if (appId == "730") { Utility.printDEBUG("Found CSGO!"); steamUser.LogOff(); break; }
                     }
                     //CMsgClientGetUserStats stats = new CMsgClientGetUserStats();
                     //EMsg.ClientGetUserStats
@@ -231,7 +231,7 @@ namespace ByscuitBotv2.Modules
 
             if (diff > STEAM3_TIMEOUT && !bConnected)
             {
-                Console.WriteLine("Timeout connecting to Steam3.");
+                Utility.printDEBUG("Timeout connecting to Steam3.");
                 Abort();
 
                 return;
