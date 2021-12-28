@@ -66,6 +66,15 @@ namespace ByscuitBotv2.Data
 
             public void AddNewState(Nanopool.Worker worker)
             {
+                // Check if the new state is a duplicate before adding
+                WorkerState state = new WorkerState(worker);
+                if (states.Contains(state))
+                {
+                    Utility.printConsole($"New state for {worker.id} is a duplicate...");
+                    Utility.printConsole($"Replacing latest worker state instead.");
+                    ReplaceCurrentState(worker);
+                    return;
+                }
                 states.Add(new WorkerState(worker));
                 Save();
             }
