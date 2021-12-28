@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using ByscuitBotv2.Modules;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -68,8 +69,22 @@ namespace ByscuitBotv2.Data
 
             public void calcTermShares()
             {
-                if (rating < prevShares) prevShares = 0;
-                termShares = rating - prevShares;
+                // Calculate the rating with the workerstates instead
+                WorkerStates.WorkerStateStruct WorkerStruct = WorkerStates.getWorkerStruct(this);
+                
+                // If reset set prevShares to 0 and add a new state
+                if (rating < prevShares)
+                {
+                    prevShares = 0;
+
+                    // Only add a new state if the last share was over 2 days
+                    DateTimeOffset lastShareUTC = DateTimeOffset.FromUnixTimeSeconds((long)WorkerStruct.GetLastState().lastshare);
+                    double dLastShare = DateTimeOffset.UtcNow.Subtract(lastShareUTC).TotalDays;
+                    Utility.printConsole($"{WorkerStruct.id} Mined: {dLastShare} Days ago");
+                    if (dLastShare > 2) WorkerStruct.AddNewState(this);
+                }
+                else WorkerStruct.ReplaceCurrentState(this); // Replace current state in case reset
+                termShares = WorkerStruct.GetTotalShares();
             }
         }
 
@@ -180,6 +195,7 @@ namespace ByscuitBotv2.Data
         public string ethUSDValue = "";
         double dETHUSDValue = -1;
         public static double payoutThreshold = 0.4; // Minimum payout variable
+        
 
         static string nanopoolGenInfo = "https://api.nanopool.org/v1/eth/user/";
         static string nanopoolWorkers = "https://api.nanopool.org/v1/eth/workers/";
@@ -266,10 +282,6 @@ namespace ByscuitBotv2.Data
         private string Calculate()
         {
             if (workers == null) return null;
-            uint sharesAfterCalc = 0;// variable for total shares
-            for (int i = 0;i< workers.Count;i++) sharesAfterCalc += workers[i].rating;// add all total shares
-            
-
             double bal = double.Parse(balance);// Variable for the total current balance
 
             // Loop through all miners to calculate total shares and miner totals
@@ -292,10 +304,10 @@ namespace ByscuitBotv2.Data
             // NAME XX.XX% (X.XXXXXXXX ETH | X.XXXXXXXX BNB | $XX.XX) | (Shares XX)
             //
             // TOTAL X.XXXXXXXXXX ETH (X.XXXXXXXX BNB | $XXX.XXUSD)
-            //string BNBETH = BinanceWallet.BinanceAPI.GetETHPairing();
-            //double BNBETH_PRICE = double.Parse(BNBETH);
-            string ratio = string.Format("__**Total (Shares {0:N0}):**__\n\n", totalTermShares);
-            //double totalBNB = 0;
+
+            // String for the output
+            string output = string.Format("__**Total (Shares {0:N0}):**__\n\n", totalTermShares);
+
             foreach (Nanopool.Worker miner in workers)
             {
                 // Output the percent of each miner
@@ -304,23 +316,17 @@ namespace ByscuitBotv2.Data
                 double termRate = termPercent * 100;
                 double termAmount = bal * termPercent;
                 double termUSDVal = termAmount * dETHUSDValue;
-                //double bnbAmount = termAmount / BNBETH_PRICE; // X.XXXXX ETH = 1 BNB | divide out the price per BNB
-                //totalBNB += bnbAmount;
-                ratio += string.Format("_**{3}**_: {0:P} ({1:N8} ETH | ${2:N2}) | ({4:N0} Shares | {5} MH/s)\n", termRate / 100, termAmount,
+
+                // Add the workers information
+                output += string.Format("_**{3}**_: {0:P} ({1:N8} ETH | ${2:N2}) | ({4:N0} Shares | {5} MH/s)\n", termRate / 100, termAmount,
                     termUSDVal, miner.id, miner.termShares, miner.hashrate);
             }
-            //double bnbBal = double.Parse($"{balance:N8}") / BNBETH_PRICE;
-            /*if (totalBNB != bnbBal)
-                Console.WriteLine("balance doesnt add up" +
-                $"Total BNB added: {totalBNB:N8} | Total BNB Mult from Balance: {bnbBal:N8}");
-                */
-            decimal gwei = 0.000000001m; // Byscuit coin price
-            decimal totalByscuitCoinsMinted = decimal.Parse(balance) / gwei;
-            Console.WriteLine($"Total Byscuit Coins Minted: {totalByscuitCoinsMinted}");
-            ratio += $"\n**Total:  {balance:N8} ETH ({balValue})**";
+
+            // Display total amount of ETH mined and USD value
+            output += $"\n**Total:  {balance:N8} ETH ({balValue})**";
 
             calculatedTotals = true;
-            return ratio;
+            return output;
         }
 
         private void GetLastPayment()
@@ -339,6 +345,7 @@ namespace ByscuitBotv2.Data
             string result = Calculate();
 
             Save();
+            WorkerStates.Reset();
             return result;
         }
 
