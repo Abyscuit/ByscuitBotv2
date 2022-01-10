@@ -90,6 +90,8 @@ namespace ByscuitBotv2.Data
                 return states.Last();
             }
         }
+
+
         public static List<WorkerStateStruct> states = new List<WorkerStateStruct>();
 
         public static WorkerStateStruct getWorkerStruct(Nanopool.Worker worker)
@@ -97,12 +99,25 @@ namespace ByscuitBotv2.Data
             for (int i = 0; i < states.Count; i++)
             {
                 WorkerStateStruct Struct = states[i];
-                if (Struct.uid == worker.uid) return Struct;
+                if (Struct.id == worker.id) return Struct;
             }
             WorkerStateStruct newStruct = new WorkerStateStruct(worker);
             states.Add(newStruct);
             Save();
             return states.Last();
+        }
+
+        public static List<WorkerStateStruct> GetMinersNotMining(List<Nanopool.Worker> workers)
+        {
+            // Copy the list of Worker States
+            List<WorkerStateStruct> notMining = new List<WorkerStateStruct>();
+            notMining.AddRange(states);
+
+            // Remove workers from the list that are currently mining
+            for (int i = 0; i < workers.Count; i++) notMining.Remove(getWorkerStruct(workers[i]));
+            
+            
+            return notMining; // Return remaining worker states 
         }
 
         public static void Save()

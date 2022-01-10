@@ -76,14 +76,18 @@ namespace ByscuitBotv2.Data
                 if (rating < prevShares)
                 {
                     prevShares = 0;
-
                     // Only add a new state if the last share was over 2 days
                     DateTimeOffset lastShareUTC = DateTimeOffset.FromUnixTimeSeconds((long)WorkerStruct.GetLastState().lastshare);
                     double dLastShare = DateTimeOffset.UtcNow.Subtract(lastShareUTC).TotalDays;
                     Utility.printConsole($"{WorkerStruct.id} Mined: {dLastShare} Days ago");
                     if (dLastShare > 2) WorkerStruct.AddNewState(this);
                 }
-                else WorkerStruct.ReplaceCurrentState(this); // Replace current state in case reset
+
+                // Quick fix
+                // If the saved prev share count is now lower than the current rating
+                // and if they have more than 1 saved state set the prev share count to zero 
+                if (WorkerStruct.states.Count > 1) this.prevShares = 0;
+                WorkerStruct.ReplaceCurrentState(this); // Replace current state in case reset
                 termShares = WorkerStruct.GetTotalShares();
             }
         }
@@ -284,6 +288,21 @@ namespace ByscuitBotv2.Data
             if (workers == null) return null;
             double bal = double.Parse(balance);// Variable for the total current balance
 
+            // Add miners that are not currently mining
+            if (workers.Count != WorkerStates.states.Count)
+            {
+                List<WorkerStates.WorkerStateStruct> notMining = WorkerStates.GetMinersNotMining(workers);
+
+                for (int i = 0; i < notMining.Count; i++)
+                {
+                    Worker worker = new Worker();
+                    worker.id = notMining[i].id;
+                    worker.uid = notMining[i].uid;
+                    worker.termShares = notMining[i].GetTotalShares();
+                    workers.Add(worker);
+                }
+            }
+
             // Loop through all miners to calculate total shares and miner totals
             uint totalTermShares = 0;
             foreach (Nanopool.Worker miner in workers)
@@ -291,7 +310,7 @@ namespace ByscuitBotv2.Data
                 // Calculate previous shares of each miner and subtract that from the
                 // current amount they have to get the amount mined in the term
                 // currentShares - prevShares = actualPayoutShares
-                miner.calcTermShares();
+                if(miner.rating != 0) miner.calcTermShares();
                 totalTermShares += miner.termShares;// Add all the term shares of ALL miners (including the miner in calc)
             }
 
