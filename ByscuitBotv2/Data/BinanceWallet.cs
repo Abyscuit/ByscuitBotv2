@@ -44,6 +44,7 @@ namespace ByscuitBotv2.Data
                 Password = pass; // ------------ Encode the password!!!!!! -------------
                 Words = words;
                 Wallet wallet = new Wallet(Words, Password);
+                
                 var Account = wallet.GetAccount(Index);
                 
                 PrivateKey = Account.PrivateKey;
