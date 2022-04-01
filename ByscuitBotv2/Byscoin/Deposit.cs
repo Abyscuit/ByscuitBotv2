@@ -128,7 +128,7 @@ namespace ByscuitBotv2.Byscoin
                             acc.credits += (double)Web3.Convert.FromWei(BigInteger.Parse(transaction.value));
                             claim.state = DepositState.Completed;
                             CreditsSystem.SaveFile();
-                            user.GetOrCreateDMChannelAsync().Result.SendMessageAsync($"> Confirmed transaction of {(double)Web3.Convert.FromWei(BigInteger.Parse(transaction.value))} BYSC");
+                            Utility.DirectMessage(user, $"> Confirmed transaction of {(double)Web3.Convert.FromWei(BigInteger.Parse(transaction.value))} BYSC").Wait();
                             break;
                         }
                     }
