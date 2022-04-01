@@ -80,7 +80,7 @@ namespace ByscuitBotv2.Data
                     DateTimeOffset lastShareUTC = DateTimeOffset.FromUnixTimeSeconds((long)WorkerStruct.GetLastState().lastshare);
                     double dLastShare = DateTimeOffset.UtcNow.Subtract(lastShareUTC).TotalDays;
                     Utility.printConsole($"{WorkerStruct.id} Mined: {dLastShare} Days ago");
-                    if (dLastShare > 2) WorkerStruct.AddNewState(this);
+                    if (dLastShare >= 2.5) WorkerStruct.AddNewState(this);
                 }
 
                 // Quick fix
@@ -313,7 +313,7 @@ namespace ByscuitBotv2.Data
                 if(miner.rating != 0) miner.calcTermShares();
                 totalTermShares += miner.termShares;// Add all the term shares of ALL miners (including the miner in calc)
             }
-
+            byscuitBot.CommandHandler.WS_UPDATED_DATE = DateTime.Now;
 
             // Get the term shares of ALL miners and divide current shares 
             // by the total amount of shares
