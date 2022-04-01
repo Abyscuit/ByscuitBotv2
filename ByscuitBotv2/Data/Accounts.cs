@@ -118,7 +118,7 @@ namespace ByscuitBotv2.Data
                 }
             }
             if (!found)
-            {// Create a new account and it to the list if not found
+            {// Create a new account and add it to the list if not found
                 acc = new Account(discordID);
                 accounts.Add(acc);
                 acc = accounts[accounts.Count - 1];// Just in case reset the reference
@@ -135,7 +135,9 @@ namespace ByscuitBotv2.Data
         public static Account GetUser(ulong discordID)
         {
             foreach (Account account in accounts) if (account.DiscordID == discordID) return account;
-            return null;
+            Account newAcc = new Account(discordID);
+            accounts.Add(newAcc);
+            return accounts[accounts.Count - 1];
         }
         public static int GetUserIndex(ulong discordID)
         {
