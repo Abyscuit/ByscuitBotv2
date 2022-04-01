@@ -119,21 +119,18 @@ namespace ByscuitBotv2.Data
             
             return notMining; // Return remaining worker states 
         }
+        static string path = "Resources/",
+            file = "WorkerStates.json",
+            fullpath = path + file;
 
         public static void Save()
         {
-            string path = "Resources/";
-            string file = "WorkerStates.json";
-            string fullpath = path + file;
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
             File.WriteAllText(fullpath, JsonConvert.SerializeObject(states, Formatting.Indented));
         }
 
         public static void Load()
         {
-            string path = "Resources/";
-            string file = "WorkerStates.json";
-            string fullpath = path + file;
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
             string data = "";
             if (File.Exists(fullpath))
@@ -142,6 +139,15 @@ namespace ByscuitBotv2.Data
                 states = JsonConvert.DeserializeObject<List<WorkerStateStruct>>(data);
                 Utility.printConsole("Loaded WorkerStates successfully!");
             }
+        }
+
+        public static void UpdateStates()
+        {
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            Nanopool nanopool = new Nanopool();
+            string result = nanopool.BalanceCheck();
+            Utility.printConsole($"Updated workerstates! Check logs for accuracy...");
+            // Print result?
         }
 
         public static void Reset()

@@ -55,7 +55,6 @@ namespace byscuitBot
             this.client.UserVoiceStateUpdated += Client_UserVoiceStateUpdated;
             this.client.GuildMemberUpdated += Client_GuildMemberUpdated;
             this.client.LatencyUpdated += Client_LatencyUpdated;
-            
 
             this.client.Connected += Client_Connected;
             this.client.Ready += Client_Ready;
@@ -64,13 +63,11 @@ namespace byscuitBot
             this.client.Disconnected += Client_Disconnected;
             
         }
+
         int postureTime = DateTime.Now.Hour / 2;
         RestUserMessage sentMessage = null;
         int count = 0;
-        int lottoDay = DateTime.Now.Day;
-        public static List<SocketGuildUser> fullMatch = new List<SocketGuildUser>();
-        public static List<SocketGuildUser> threeMatch = new List<SocketGuildUser>();
-        public static List<SocketGuildUser> twoMatch = new List<SocketGuildUser>();
+        public static DateTime WS_UPDATED_DATE = DateTime.Now;
         private Task Client_LatencyUpdated(int arg1, int arg2)
         {
             /*
@@ -101,106 +98,6 @@ namespace byscuitBot
             }
             // Delete posture check message
             if (sentMessage != null) { if (count++ > 2) { sentMessage.DeleteAsync().GetAwaiter(); sentMessage = null; count = 0; } }
-            printConsole("LottoDay: " + lottoDay);
-            // Do byscoin Lotto
-            if (DateTime.Now.Day != lottoDay)
-            {
-                // Generate 4 random numbers but randomize random
-                random.Next(); random.Next(); random.Next(); random.Next();
-                int[] winningNums = { random.Next(0, 9), random.Next(0, 9), random.Next(0, 9), random.Next(0, 9) };
-                printConsole("Doing Byscoin Lotto");
-                if (Accounts.accounts == null) return Task.CompletedTask;
-                Accounts.Sort();
-                twoMatch.Clear();
-                threeMatch.Clear();
-                fullMatch.Clear();
-                // Add the top 10 leader board members
-                for (int i = 0; i < LottoSystem.LOTTO_ENTRIES.Count; i++)
-                {
-                    LottoEntry entry = LottoSystem.LOTTO_ENTRIES[i];
-                    int matchingNums = 0;
-                    for (int j = 0; j < winningNums.Length; j++)
-                        if (entry.numbers[j] == winningNums[j]) matchingNums++;
-                    SocketGuildUser user = Byscuits.GetUser(entry.discordID);
-                    if (matchingNums == 2) { if (!twoMatch.Contains(user)) twoMatch.Add(user); }
-                    else if (matchingNums == 3) { if (!threeMatch.Contains(user)) threeMatch.Add(user); }
-                    else if (matchingNums == 4) { if (!fullMatch.Contains(user)) fullMatch.Add(user); }
-                }
-                decimal TotalPot = LottoSystem.LOTTO_POT;
-                if (twoMatch.Count > 0)
-                {
-                    // Give 10% pot / winners
-                    decimal winnings = (LottoSystem.LOTTO_POT / 10) / twoMatch.Count;
-                    LottoSystem.LOTTO_POT -= TotalPot / 10;
-                    for(int i = 0; i < twoMatch.Count; i++) {
-                        Account acc = CreditsSystem.GetAccount(twoMatch[i]);
-                        acc.credits += (double)winnings;
-                    }
-                }
-                if (threeMatch.Count > 0)
-                {
-                    // Give 25% pot / winners
-                    decimal winnings = (TotalPot / 5) / threeMatch.Count;
-                    LottoSystem.LOTTO_POT -= TotalPot / 5;
-                    for (int i = 0; i < threeMatch.Count; i++)
-                    {
-                        Account acc = CreditsSystem.GetAccount(threeMatch[i]);
-                        acc.credits += (double)winnings;
-                    }
-                }
-                if (fullMatch.Count > 0)
-                {
-                    // Give 65-100% POT / winners
-                    decimal winnings = (LottoSystem.LOTTO_POT / fullMatch.Count);
-                    for (int i = 0; i < fullMatch.Count; i++)
-                    {
-                        Account acc = CreditsSystem.GetAccount(fullMatch[i]) ;
-                        acc.credits += (double)winnings;
-                    }
-                }
-                string winMsg = "> ";
-                // Display message for two matching number winners
-                for (int i = 0; i < twoMatch.Count; i++)
-                {
-                    if (i > 0) winMsg += " ";
-                    winMsg += $"{twoMatch[i].Mention}";
-                }
-                string match2txt = "(matched with 2 numbers)";
-                if (twoMatch.Count > 1) winMsg += $" split {TotalPot / 10} BYSC {match2txt}";
-                else if (twoMatch.Count == 1) winMsg += $" won {TotalPot / 10} BYSC {match2txt}";
-
-                // Display message for three matching number winners
-                if (winMsg != "> " && threeMatch.Count > 0) winMsg += "\n> "; // Check if win message is empty
-                string match3txt = "(matched with 3 numbers)";
-                for (int i = 0; i < threeMatch.Count; i++)
-                {
-                    if (i > 0) winMsg += " ";
-                    winMsg += $"{threeMatch[i].Mention}";
-                }
-                if (threeMatch.Count > 1) winMsg += $" split {TotalPot / 5} BYSC {match3txt}";
-                else if (threeMatch.Count == 1) winMsg += $" won {TotalPot / 5} BYSC {match3txt}";
-
-                // Display message for four matching number winners
-                if (winMsg != "> " && fullMatch.Count > 0) winMsg += "\n> "; // Check if win message is empty
-                string matchFulltxt = "(matched with 4 numbers)";
-                for (int i = 0; i < fullMatch.Count; i++)
-                {
-                    if (i > 0) winMsg += " ";
-                    winMsg += $"{fullMatch[i].Mention}";
-                }
-                if (fullMatch.Count > 1) winMsg += $" split {LottoSystem.LOTTO_POT} BYSC {matchFulltxt}";
-                else if (fullMatch.Count == 1) winMsg += $" won {LottoSystem.LOTTO_POT} BYSC {matchFulltxt}";
-                SocketTextChannel lottoChannel = Byscuits.GetTextChannel(840471064927666186);
-                // Send the message if there are winners
-                string msg = $"> WINNING NUMBERS: {winningNums[0]} {winningNums[1]} {winningNums[2]} {winningNums[3]}\n";
-                if (twoMatch.Count > 0 || threeMatch.Count > 0 || fullMatch.Count > 0) lottoChannel.SendMessageAsync(msg + winMsg);
-                else lottoChannel.SendMessageAsync(msg + "> No winners!");
-                LottoSystem.LOTTO_ENTRIES.Clear();
-                LottoSystem.LOTTO_POT = LottoSystem.INITIAL_LOTTO_POT;
-                LottoSystem.Save();
-                CreditsSystem.SaveFile();
-                lottoDay = DateTime.Now.Day;
-            }
             */
             // Check if any new deposits are coming in
             // Might want to create a new thread for this
@@ -208,12 +105,15 @@ namespace byscuitBot
                 printDEBUG($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
                 Deposit.CheckDepositClaims();
             }
+
+            // WorkerStates Update
+            if(WS_UPDATED_DATE.AddHours(5) < DateTime.Now) WorkerStates.UpdateStates();
             return Task.CompletedTask;
         }
 
-        private Task Client_GuildMemberUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
+        private Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> arg1, SocketGuildUser arg2)
         {
-            printDEBUG($"GuildMember Updated | User 1: {arg1} | User 2: {arg2}");
+            printDEBUG($"GuildMember Updated | ARG 1: {arg1.Value} | ARG 2: {arg2}");
             if(arg1.Id == 215535755727077379) // FubiRock nickname check
                 if (arg2.Nickname != "FaggotRock") arg2.ModifyAsync(m => { m.Nickname = "FaggotRock"; }) ;
             
@@ -262,6 +162,7 @@ namespace byscuitBot
                 printDEBUG($"{user} is in AFK Channel");
             }
 
+            // ---- FIX THIS ----
             // Update user roles
             Accounts.Account account = Accounts.GetUser(user.Id);
             List<Roles.Role> roles = Roles.CheckRoles(account.GetHours());
@@ -286,7 +187,7 @@ namespace byscuitBot
                 }
             }
             printDEBUG($"Roles: {strRoles}");
-            if (newRoles) guild.DefaultChannel.SendMessageAsync($"> **{user}**_({user.Id})_ has earned **{strRoles}**!");
+            //if (newRoles) guild.DefaultChannel.SendMessageAsync($"> **{user}**_({user.Id})_ has earned **{strRoles}**!");
 
             return Task.CompletedTask;
         }
@@ -384,13 +285,14 @@ namespace byscuitBot
             Accounts.Load();
             Roles.Load();
             Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
-            PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role
+            PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role 765403412568735765
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
             CashoutSystem.Load();
             LottoSystem.Load();
             Deposit.Load();
             WorkerStates.Load();
+            WorkerStates.UpdateStates();
             Nanopool.payoutThreshold = Program.config.NANOPOOL_PAYOUT;
             Utility.SetDebugLevel(Program.config.DEBUG_LEVEL);
             return Task.CompletedTask;
@@ -490,10 +392,10 @@ namespace byscuitBot
         /// </summary>
         /// <param name="user">Current User</param>
         /// <returns></returns>
-        private async Task Client_UserLeft(SocketGuildUser user)
+        private async Task Client_UserLeft(SocketGuild guild, SocketUser user)
         {
             string username = user.ToString();
-            var channel = user.Guild.SystemChannel;
+            var channel = guild.SystemChannel;
             string msg = String.Format("**{0}** has left the server...", username);  //Bye Message
             if (user.Id != BotID)
                 await channel.SendMessageAsync(msg);   //Welcomes the new user
@@ -506,8 +408,8 @@ namespace byscuitBot
             embed.WithAuthor("Server Report", user.GetAvatarUrl());
             */
 
-            printConsole(username + " left " + user.Guild.Name);
-            await checkStats(user.Guild); // Update user count
+            printConsole(username + " left " + guild.Name);
+            await checkStats(guild); // Update user count
         }
 
         /// <summary>

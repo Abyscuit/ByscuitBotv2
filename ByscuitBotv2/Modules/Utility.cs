@@ -98,7 +98,8 @@ namespace ByscuitBotv2.Modules
         public static async Task DirectMessage(SocketGuildUser user, string msg = "")
         {
             // Get or create the Direct channel then send message
-            var x = await user.GetOrCreateDMChannelAsync();
+            var x = await user.CreateDMChannelAsync();
+            
             await x.SendMessageAsync(msg);
 
             // Print to console that we sent the message
@@ -109,7 +110,7 @@ namespace ByscuitBotv2.Modules
         public static async Task DirectMessage(SocketGuildUser user,string msg = "", Embed embed = null)
         {
             // Get or create the Direct channel then send message
-            var x = await user.GetOrCreateDMChannelAsync();
+            var x = await user.CreateDMChannelAsync();
             await x.SendMessageAsync(msg, false, embed);
 
             // Print to console that we sent the message

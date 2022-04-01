@@ -80,7 +80,7 @@ namespace ByscuitBotv2.Modules
         [Summary("Deletes a specified amount of messages in the channel - Usage: {0}clear <number>")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         [RequireBotPermission(GuildPermission.ManageMessages)]
-        public async Task Clear(int num)
+        public async Task Clear(int num = 0)
         {
             // Make sure number is over 0
             if (num <= 0) await Context.Channel.SendMessageAsync("Number to delete messages must be over 0...");
@@ -88,8 +88,8 @@ namespace ByscuitBotv2.Modules
             await Context.Message.DeleteAsync();
             IAsyncEnumerable<IReadOnlyCollection<IMessage>> x = Context.Channel.GetMessagesAsync((num));// All the messages
             IAsyncEnumerator<IReadOnlyCollection<IMessage>> index = x.GetAsyncEnumerator();// Get message enumerator
-            
-            while (await index.MoveNextAsync())// Move to Next Message if exist
+
+            while (index.MoveNextAsync().Result)// Move to Next Message if exist
                 foreach (IMessage msg in index.Current)// Delete message
                     await msg.DeleteAsync();
         }
@@ -426,41 +426,6 @@ namespace ByscuitBotv2.Modules
         }
 
 
-        /*
-        static HttpClientHandler hcHandle = new HttpClientHandler();
-
-        [Command("CheckTwitch")]
-        [Alias("live", "twitchlive", "twitch", "stream")]
-        [Summary("Checks if the user is live on Twitch - Usage: {0}checktwitch <username>")]
-        public async Task CheckTwitch([Remainder]string user = "")
-        {
-            using (var hc = new HttpClient(hcHandle, false))
-            // false here prevents disposing the handler, which should live for the duration of the program and be shared by all requests that use the same handler properties
-            {
-                hc.DefaultRequestHeaders.Add("Client-ID", Program.config.TWITCH_CLIENT_ID);
-                hc.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "2gbdx6oar67tqtcmt49t3wpcgycthx");
-                hc.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/6.0;)");
-                hc.Timeout = TimeSpan.FromSeconds(30); // good idea to set to something reasonable
-
-                // https://api.twitch.tv/helix/search/channels?query=
-                // https://api.twitch.tv/helix/streams?user_login=
-                using (var response = await hc.GetAsync($"https://api.twitch.tv/helix/search/channels?query={user}"))
-                {
-                    Utility.printConsole(await response.Content.ReadAsStringAsync());
-                    response.EnsureSuccessStatusCode(); // throws, if fails, can check response.StatusCode yourself if you prefer
-                    string jsonString = await response.Content.ReadAsStringAsync();
-                    // TODO: parse json and return true, if the returned array contains the stream
-
-                    Utility.printConsole(jsonString);
-                    Twitch.Response r = JsonConvert.DeserializeObject<Twitch.Response>(jsonString);
-                    
-                }
-            }
-
-        }
-        */
-
-
         [Command("Ban")]
         [Alias("gtfo", "bye")]
         [RequireUserPermission(GuildPermission.Administrator)]
@@ -480,22 +445,54 @@ namespace ByscuitBotv2.Modules
         {
             //Display credits, join date
             if (user == null) user = Context.User as SocketGuildUser;
+
+            // Doesnt get user activity
+            IActivity act = null;
+            if (user.Activities.Count > 0) act = user.Activities.First();
+            // Delete after you figure it out
+            foreach (IActivity activity in user.Activities) Utility.printDEBUG($"{activity.Name}: {activity.Details}");
+
+            TimeSpan TimeInServer = DateTimeOffset.Now.Subtract(user.JoinedAt.Value);
+            TimeSpan AgeOfAccount = DateTimeOffset.Now.Subtract(user.CreatedAt);
+            string timeInSrvrStr = TimeSpanToString(TimeInServer);
+            if (timeInSrvrStr == "0 Days") timeInSrvrStr = "Today";
+            string ageOfAccStr = TimeSpanToString(AgeOfAccount);
+
             string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
-            Account account = CreditsSystem.GetAccount(user);
+            string[] userData = GetUserRankTime(user);
+            string rank = userData[0];
+            string time = userData[1];
+            
             EmbedBuilder embed = new EmbedBuilder();
-            bool hasAccount = account != null;
-            if (!hasAccount) account = CreditsSystem.AddUser(user);
             embed.WithAuthor($"{username} Stats", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Joined Server").WithValue(user.JoinedAt.Value.LocalDateTime.ToString("MM/dd/yyyy")),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Byscoin").WithValue(hasAccount ? account.credits : 0),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Account Created").WithValue(user.CreatedAt.LocalDateTime.ToString("d")),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("Booster").WithValue(user.Roles.Contains(CommandHandler.PremiumByscuitRole) ? "Yes" : "No"),
-                new EmbedFieldBuilder().WithIsInline(true).WithName("BSC Enabled").WithValue(BinanceWallet.GetAccount(user) != null ? "Yes" : "No"), // Update when BSC is enabled on the bot
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Joined Server").WithValue($"{user.JoinedAt.Value.LocalDateTime.ToString("MM/dd/yyyy")} ({timeInSrvrStr})"),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Account Created").WithValue($"{user.CreatedAt.LocalDateTime.ToString("d")} ({ageOfAccStr})"),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Server Booster").WithValue(user.Roles.Contains(CommandHandler.PremiumByscuitRole) ? "Yes" : "No"),
+                //new EmbedFieldBuilder().WithIsInline(true).WithName("BSC Enabled").WithValue(BinanceWallet.GetAccount(user) != null ? "Yes" : "No"), // Update when BSC is enabled on the bot
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Voice Chat Rank").WithValue(rank),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("Voice Chat Time").WithValue(time),
+
             });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        public string TimeSpanToString(TimeSpan timeSpan)
+        {
+            string result = "";
+            int totalDays = timeSpan.Days;
+            int years = totalDays / 365;
+            int months = (totalDays - (years * 365)) / 30;
+            int days = (totalDays - (years * 365) - (months * 30));
+
+            if (years >= 1) result += $"{years} Years";
+            if (months >= 1) result += $"{(result == "" ? "" : ", ")}{months} Months";
+            if (days >= 1) result += $"{(result == "" ? "" : ", ")}{days} Days";
+            if (result == "") result = "0 Days";
+
+            return result;
         }
 
 
@@ -590,26 +587,34 @@ namespace ByscuitBotv2.Modules
         {
             if (user == null) user = Context.User as SocketGuildUser;
             string username = (!string.IsNullOrEmpty(user.Nickname) ? user.Nickname : user.Username) + "#" + user.Discriminator;
-            Accounts.Account account = Accounts.GetUser(user.Id);
+            string[] data = GetUserRankTime(user);
+            string rank = data[0];
+            string time = data[1];
             EmbedBuilder embed = new EmbedBuilder();
-            if (account == null)
-            {
-                await Context.Channel.SendMessageAsync($"> **{username}**_({user.Id})_ has no recorded time!");
-                return;
-            }
-            if (user.VoiceChannel == null) account.isCounting = false;
-            account.UpdateTime();
-            TimeSpan ts = account.TimeSpent;
-            Accounts.Sort();
-            string rank = "#"+(Accounts.GetUserIndex(user.Id) + 1);
-            string time = string.Format("{0}{1}{2}{3}", (ts.Days > 0) ? ts.Days.ToString() + "d, " : "",
-                (ts.Hours > 0) ? ts.Hours.ToString() + "hr, " : "", (ts.Minutes > 0) ? ts.Minutes.ToString() + "m, " : "", ts.Seconds.ToString() + "s");
             embed.WithAuthor("Check User Time", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
             embed.WithColor(36, 122, 191);
             embed.WithFields(new EmbedFieldBuilder[]{ new EmbedFieldBuilder().WithIsInline(true).WithName("Rank").WithValue(rank),
                 new EmbedFieldBuilder().WithIsInline(true).WithName(username).WithValue(time) });
             await Context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        /// <summary>
+        /// Returns user's time in voice chat and their rank.
+        /// </summary>
+        /// <param name="user">User in the server.</param>
+        /// <returns>String array where [0] is rank and [1] is time.</returns>
+        public string[] GetUserRankTime(SocketGuildUser user)
+        {
+            Accounts.Account account = Accounts.GetUser(user.Id);
+            if (user.VoiceChannel == null) account.isCounting = false;
+            account.UpdateTime();
+            TimeSpan ts = account.TimeSpent;
+            Accounts.Sort();
+            string rank = "#" + (Accounts.GetUserIndex(user.Id) + 1);
+            string time = string.Format("{0}{1}{2}{3}", (ts.Days > 0) ? ts.Days.ToString() + "d, " : "",
+                (ts.Hours > 0) ? ts.Hours.ToString() + "hr, " : "", (ts.Minutes > 0) ? ts.Minutes.ToString() + "m, " : "", ts.Seconds.ToString() + "s");
+            return new string[2] { rank, time };
         }
 
         [Command("Leaderboard")]

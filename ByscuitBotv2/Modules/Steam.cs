@@ -177,8 +177,8 @@ namespace ByscuitBotv2.Modules
         {
             ReadOnlyCollection<SteamApps.LicenseListCallback.License> license = callback.LicenseList;
             if (license.Count == 0) return;
-            List<uint> packages = new List<uint>();
-            foreach(SteamApps.LicenseListCallback.License app in license) packages.Add(app.PackageID);
+            List<SteamApps.PICSRequest> packages = new List<SteamApps.PICSRequest>();
+            foreach(SteamApps.LicenseListCallback.License app in license) packages.Add(new SteamApps.PICSRequest(app.PackageID));
             bool completed = false;
             Action<SteamApps.PICSProductInfoCallback> cbMethod = (packageInfo) =>
             {
@@ -203,7 +203,7 @@ namespace ByscuitBotv2.Modules
 
             WaitUntilCallback(() =>
             {
-                manager.Subscribe(steamApps.PICSGetProductInfo(new List<uint>(), packages), cbMethod);
+                manager.Subscribe(steamApps.PICSGetProductInfo(new List<SteamApps.PICSRequest>(), packages), cbMethod);
             }, () => { return completed; });
         }
         public delegate bool WaitCondition();
