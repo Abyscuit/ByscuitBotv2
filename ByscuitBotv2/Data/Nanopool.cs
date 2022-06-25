@@ -71,7 +71,8 @@ namespace ByscuitBotv2.Data
             {
                 // Calculate the rating with the workerstates instead
                 WorkerStates.WorkerStateStruct WorkerStruct = WorkerStates.getWorkerStruct(this);
-                
+                Utility.printConsole($"Calculating {WorkerStruct.id} shares...");
+
                 // If reset set prevShares to 0 and add a new state
                 if (rating < prevShares)
                 {
@@ -87,6 +88,11 @@ namespace ByscuitBotv2.Data
                 // If the saved prev share count is now lower than the current rating
                 // and if they have more than 1 saved state set the prev share count to zero 
                 if (WorkerStruct.states.Count > 1) this.prevShares = 0;
+                else { // Preserve prev share count if reset
+                    if (WorkerStruct.states[0].prevShares > 0) {
+                        prevShares = WorkerStruct.states[0].prevShares;
+                    }
+                }
                 WorkerStruct.ReplaceCurrentState(this); // Replace current state in case reset
                 termShares = WorkerStruct.GetTotalShares();
             }
