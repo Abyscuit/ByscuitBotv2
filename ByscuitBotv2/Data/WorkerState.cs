@@ -153,6 +153,15 @@ namespace ByscuitBotv2.Data
         public static void Reset()
         {
             states = new List<WorkerStateStruct>();
+            Nanopool nanopool = new Nanopool();
+            nanopool.BalanceCheck();
+            foreach(WorkerStateStruct stateStruct in states)
+            {
+                if (stateStruct.states.Count > 1) stateStruct.states.RemoveRange(0, stateStruct.states.Count - 1);
+                WorkerState state = stateStruct.states[0];
+                state.prevShares = state.rating;
+                state.termShares = 0;
+            }
             Save();
             Utility.printConsole("WorkerStates have been reset");
         }

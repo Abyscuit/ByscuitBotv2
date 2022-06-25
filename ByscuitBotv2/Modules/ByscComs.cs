@@ -323,6 +323,21 @@ namespace ByscuitBotv2.Modules
             await GetNanopoolInfo();
         }
 
+        [Command("NanopoolReset")]
+        [Alias("nanoreset", "reset", "resetnano")]
+        [Summary("Reset the nanopool share count - Usage: {0}NanopoolReset")]
+        [RequireOwner()]
+        public async Task NanopoolReset([Remainder] string text = "")
+        {
+            await Context.Message.DeleteAsync();
+            ulong minerRoleID = 832412957396303892; // Role for miners
+            SocketRole minerRole = Context.Guild.GetRole(minerRoleID);
+            Nanopool nanopool = new Nanopool();
+            WorkerStates.Reset();
+            string result = "> Nanopool Share count reset!";
+            await Context.Channel.SendMessageAsync(result);
+        }
+
         #endregion
 
         #region Byscoin
