@@ -145,6 +145,17 @@ namespace ByscuitBotv2.Data
             return -1;
         }
 
+        public static List<Account> GetAccountsInVC()
+        {  
+            List<Account> VCAccounts = new List<Account>();
+            for(int i = 0; i < accounts.Count; i++)
+            {
+                Account account = accounts[i];
+                if (account.isCounting) VCAccounts.Add(account);
+            }
+            return VCAccounts;
+        }
+
         // Bruteforce sort
         public static void Sort()
         {
