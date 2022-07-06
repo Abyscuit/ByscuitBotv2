@@ -150,7 +150,7 @@ namespace byscuitBot
             else// If the user deafens/mutes but doesnt change channels
             {   // Mute check
                 if (vState2.IsMuted || vState2.IsSelfMuted) Accounts.UpdateUser(user.Id, false);// Stop counting if muted
-                else Accounts.UpdateUser(user.Id, true);//Start counting if unmuted
+                else Accounts.UpdateUser(user.Id, true, true); //Start counting if unmuted
                 printDEBUG($"{user} muted: {(vState2.IsMuted || vState2.IsSelfMuted)}");
             }
 
@@ -160,6 +160,15 @@ namespace byscuitBot
             {
                 Accounts.UpdateUser(user.Id, false);//Stop counting if AFK
                 printDEBUG($"{user} is in AFK Channel");
+            }
+
+            foreach (Accounts.Account VCAccount in Accounts.GetAccountsInVC())
+            {
+                if (guild.GetUser(VCAccount.DiscordID).VoiceChannel == null)
+                {
+                    Accounts.UpdateUser(VCAccount.DiscordID, false);
+                    printDEBUG($"{guild.GetUser(VCAccount.DiscordID)} is no longer in a channel");
+                }
             }
 
             // ---- FIX THIS ----
