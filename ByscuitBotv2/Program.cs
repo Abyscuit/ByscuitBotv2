@@ -50,7 +50,8 @@ namespace ByscuitBotv2
                 LogLevel = config.DEBUG_LEVEL, //change log level in config file
                 ConnectionTimeout = 30000, // 30 second timeout
                 DefaultRetryMode = RetryMode.AlwaysRetry,
-                AlwaysDownloadUsers = true // Enable Server Member Intent in Discord API Settings
+                AlwaysDownloadUsers = true, // Enable Server Member Intent in Discord API Settings
+                GatewayIntents = GatewayIntents.All
             });
 
             
