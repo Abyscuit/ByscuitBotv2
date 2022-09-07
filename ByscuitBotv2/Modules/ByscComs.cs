@@ -264,7 +264,7 @@ namespace ByscuitBotv2.Modules
             double hoursleft = timeleft.TotalHours;
             double minutesleft = timeleft.TotalMinutes;
             result += "\n**_";
-            string strPayMsg = "About {0} to reach {1:N1} ETH payout";
+            string strPayMsg = "About {0} until the ETH 2.0 merge";
             string strPayTime = "";
             if (daysleft > 30) strPayTime += $"{Math.Round(daysleft / 30.0f)} month(s)";
             else if (daysleft >= 1) strPayTime += $"{Math.Round(daysleft)} day(s)";
@@ -273,7 +273,7 @@ namespace ByscuitBotv2.Modules
                 if (hoursleft >= 1) strPayTime += $"{Math.Round(hoursleft)} hour(s) ";
                 if (minutesleft > 0) strPayTime += $"{Math.Round(minutesleft % 60)} minute(s)";
             }
-            strPayMsg = string.Format(strPayMsg, strPayTime, Nanopool.payoutThreshold);
+            strPayMsg = string.Format(strPayMsg, strPayTime);
             result += strPayMsg;
             result += "_**";
             EmbedBuilder embed = new EmbedBuilder();
