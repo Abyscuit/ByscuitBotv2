@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,7 +38,7 @@ namespace ByscuitBotv2.Modules
         /// <param name="obj">The object to print.</param>
         public static void printConsole(object obj)
         {
-            string msg = DateTime.Now.ToLocalTime() + " | " + obj.ToString();
+            string msg = DateTime.Now.ToLocalTime() + " | " + JsonConvert.SerializeObject(obj);
             Console.WriteLine(msg);
             log.Add(msg);
         }
@@ -56,7 +57,7 @@ namespace ByscuitBotv2.Modules
         /// <param name="obj">The object to print.</param>
         public static void printERROR(object obj)
         {
-            if ((int)DEBUG_LEVEL >= 1) printConsole($"ERROR | {obj.ToString()}");
+            if ((int)DEBUG_LEVEL >= 1) printConsole($"ERROR | {JsonConvert.SerializeObject(obj)}");
         }
 
         /// <summary>
@@ -73,7 +74,7 @@ namespace ByscuitBotv2.Modules
         /// <param name="obj">The object to print.</param>
         public static void printDEBUG(object obj)
         {
-            if ((int)DEBUG_LEVEL >= 5) printConsole($"DEBUG | {obj.ToString()}");
+            if ((int)DEBUG_LEVEL >= 5) printConsole($"DEBUG | {JsonConvert.SerializeObject(obj)}");
         }
 
         /// <summary>
@@ -90,7 +91,7 @@ namespace ByscuitBotv2.Modules
         /// <param name="obj">The object to print.</param>
         public static void printLOG(object obj)
         {
-            if ((int)DEBUG_LEVEL >= 3) printConsole($"INFO | {obj.ToString()}");
+            if ((int)DEBUG_LEVEL >= 3) printConsole($"INFO | {JsonConvert.SerializeObject(obj)}");
         }
         #endregion
 
