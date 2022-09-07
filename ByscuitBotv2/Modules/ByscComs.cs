@@ -267,12 +267,13 @@ namespace ByscuitBotv2.Modules
             string strPayMsg = "About {0} until the ETH 2.0 merge";
             string strPayTime = "";
             if (daysleft > 30) strPayTime += $"{Math.Round(daysleft / 30.0f)} month(s)";
-            else if (daysleft >= 1) strPayTime += $"{Math.Round(daysleft)} day(s)";
             else
             {
-                if (hoursleft >= 1) strPayTime += $"{Math.Round(hoursleft)} hour(s) ";
-                if (minutesleft > 0) strPayTime += $"{Math.Round(minutesleft % 60)} minute(s)";
+                if (daysleft >= 1) strPayTime += $"{Math.Round(daysleft)} day(s)";
+                if (Math.Round(hoursleft % 24) >= 1) strPayTime += $"{(strPayTime != "" ? " " : "")}{Math.Round(hoursleft % 24)} hour(s)";
+                if (Math.Round(minutesleft % 60) > 0) strPayTime += $"{(strPayTime != "" ? " " : "")}{Math.Round(minutesleft % 60)} minute(s)";
             }
+            
             strPayMsg = string.Format(strPayMsg, strPayTime);
             result += strPayMsg;
             result += "_**";
