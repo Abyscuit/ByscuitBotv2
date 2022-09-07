@@ -632,11 +632,11 @@ namespace ByscuitBotv2.Modules
             int count = ((arrAcc.Count >= 10) ? 10 : arrAcc.Count);
             for (int i = 0; i < count; i++)// Top 10 list
             {
-                largest = arrAcc[0];
-                SocketUser user = null;
+                largest = arrAcc.First();
                 foreach (Accounts.Account account in arrAcc)
                 {
-                    user = Context.Guild.GetUser(account.DiscordID);
+                    SocketGuildUser user = Context.Guild.GetUser(account.DiscordID);
+                    if (user == null) continue;
                     if (account.isSame(largest)) continue;// Skip if largest = current
                     if (top.Contains(user)) continue;// Skip if current is in the list already
 
@@ -645,9 +645,16 @@ namespace ByscuitBotv2.Modules
                         largest = account;
                 }
                 SocketGuildUser usr = Context.Guild.GetUser(largest.DiscordID);
-                if (usr != null) top.Add(usr);
-                else i--;
+                if (usr != null)
+                {
+                    top.Add(usr);
+                }
+                else
+                {
+                    if (i > 0) i--;
+                }
                 arrAcc.Remove(largest);
+                if (arrAcc.Count == 0) break;
             }
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithAuthor("Leaderboard", Context.Guild.IconUrl);
@@ -684,14 +691,14 @@ namespace ByscuitBotv2.Modules
             List<SocketGuildUser> top = new List<SocketGuildUser>();
             List<Accounts.Account> arrAcc = new List<Accounts.Account>();
             arrAcc.AddRange(Accounts.accounts);
-            int count = ((arrAcc.Count >= 10) ? 10 : arrAcc.Count);
+            int count = arrAcc.Count;
             for (int i = 0; i < count; i++)// Top 10 list
             {
-                largest = arrAcc[0];
-                SocketUser user = null;
+                largest = arrAcc.First();
                 foreach (Accounts.Account account in arrAcc)
                 {
-                    user = Context.Guild.GetUser(account.DiscordID);
+                    SocketGuildUser user = Context.Guild.GetUser(account.DiscordID);
+                    if (user == null) continue;
                     if (account.isSame(largest)) continue;// Skip if largest = current
                     if (top.Contains(user)) continue;// Skip if current is in the list already
 
@@ -701,8 +708,12 @@ namespace ByscuitBotv2.Modules
                 }
                 SocketGuildUser usr = Context.Guild.GetUser(largest.DiscordID);
                 if (usr != null) top.Add(usr);
-                else i--;
+                else
+                {
+                    if(i > 0) i--;
+                }
                 arrAcc.Remove(largest);
+                if (arrAcc.Count == 0) break;
             }
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithAuthor("Leaderboard", Context.Guild.IconUrl);
@@ -723,7 +734,7 @@ namespace ByscuitBotv2.Modules
             embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(true).WithName("User").WithValue(usernames),
             new EmbedFieldBuilder().WithIsInline(true).WithName("Time Spent").WithValue(time)});
 
-            // await Context.Channel.SendMessageAsync("", false, embed.Build());
+            await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
         #endregion
 
