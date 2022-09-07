@@ -455,7 +455,6 @@ namespace byscuitBot
 
             int botcount = 0;
             foreach (SocketGuildUser user in users) if (user.IsBot) botcount++;
-
             int memberCount = users.Count;
             if (!guild.HasAllMembers) memberCount = guild.MemberCount;
 
@@ -498,7 +497,8 @@ namespace byscuitBot
                 SocketVoiceChannel userChan = GetVoiceChannel("User Count", guild);
                 SocketVoiceChannel memberChan = GetVoiceChannel("Member Count", guild);
                 int members = int.Parse(memberChan.Name.Split(':')[1]);
-                if (members != memberCount)
+                int bots = int.Parse(botChan.Name.Split(':')[1]);
+                if (members != memberCount || botcount != bots)
                 {
                     if (memberChan != null) await memberChan.ModifyAsync(m => m.Name = "Member Count: " + memberCount);
                     if (botChan != null && int.Parse(botChan.Name.Split(':')[1]) != botcount) await botChan.ModifyAsync(m => m.Name = "Bot Count: " + botcount);
