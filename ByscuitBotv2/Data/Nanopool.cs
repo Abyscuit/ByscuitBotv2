@@ -215,14 +215,6 @@ namespace ByscuitBotv2.Data
 
         // ---------- FUNCTIONS ------------
 
-        private string[] getDateFromFile(string file)
-        {
-            string fileName = folderPath + "/";
-            string[] split = file.Remove(0, fileName.Length).Split(' ');
-            string date = split.Length > 0 ? split[0] : "";
-            return date.Split('-');
-        }
-
         private void loadWorkers()
         {
             string fileName = folderPath + "/";
@@ -232,9 +224,11 @@ namespace ByscuitBotv2.Data
                 // Add if date is older load newest check
                 if (newest == "") { newest = file; continue; }
 
-                string[] newestDate = getDateFromFile(newest);// split the newest name into date numbers [MM, DD, YY]
+                string[] newestDate = newest.Remove(0, (folderPath + "/").Length).Split(' ')[0].Split('-');// split the newest name into date numbers M[0], D[1], Y[2]
+                string[] newestTime = newest.Split(' ')[1].Split('-');// may be unnecessary but split time too
 
-                string[] fileDate = getDateFromFile(file);// split the file name into date numbers [MM, DD, YY]
+                string[] fileDate = file.Remove(0, (folderPath + "/").Length).Split(' ')[0].Split('-');// split the file name into date numbers M[0], D[1], Y[2]
+                string[] fileTime = file.Split(' ')[1].Split('-');// may be unnecessary but split time too
 
                 int fileYear = int.Parse(fileDate[2]);
                 int newestYear = int.Parse(newestDate[2]);
@@ -297,7 +291,7 @@ namespace ByscuitBotv2.Data
         }
         private string Calculate()
         {
-            if (workers == null) return "";
+            if (workers == null) return null;
             double bal = double.Parse(balance);// Variable for the total current balance
 
             // Add miners that are not currently mining
@@ -456,7 +450,7 @@ namespace ByscuitBotv2.Data
             List<Worker> workers = null;
 
             if (r.status != false) workers = r.data;
-            else return new List<Worker>();
+            else return null;
 
             return workers;
         }
@@ -484,8 +478,116 @@ namespace ByscuitBotv2.Data
 
         public static DateTimeOffset GetTimeUntilPayout(string address)
         {
-            TimeSpan theMerge = DateTime.Parse("09/15/2022").Subtract(DateTime.Now);
-            return DateTimeOffset.Now.AddDays(theMerge.TotalDays);
+            DateTimeOffset result = DateTimeOffset.Now;
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(nanopoolGenInfo + address);
+            request.ContentType = "application/json; charset=utf-8";
+            HttpWebResponse response = request.GetResponse() as HttpWebResponse;
+            string data = "";
+            using (Stream responseStream = response.GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                data = reader.ReadToEnd();
+            }
+
+            GeneralInfoResponse r = JsonConvert.DeserializeObject<GeneralInfoResponse>(data);
+
+            HttpWebRequest request2 = (HttpWebRequest)WebRequest.Create(nanopoolCalculator + r.data.avghashrate.h6);
+            request2.ContentType = "application/json; charset=utf-8";
+            HttpWebResponse response2 = request2.GetResponse() as HttpWebResponse;
+            string data2 = "";
+            using (Stream responseStream = response2.GetResponseStream())
+            {
+                StreamReader reader = new StreamReader(responseStream, Encoding.UTF8);
+                data2 = reader.ReadToEnd();
+            }
+
+            CalculatorResponse r2 = JsonConvert.DeserializeObject<CalculatorResponse>(data2);
+            // Get the total amount of coins in wallet
+            // Compare to week/day/hour/minute
+            // If calculator amount is more than 0.1 ETH then move to next day/hour/minute
+            // Continue until 0.1 Threshold is made then print time
+
+            double walletBalance = double.Parse(r.data.balance);
+            double weekCoins = r2.data.week.coins;
+            double monthCoins = r2.data.month.coins;
+            double dayCoins = r2.data.day.coins;
+            double hourCoins = r2.data.hour.coins;
+            double minuteCoins = r2.data.minute.coins;
+            if (walletBalance + monthCoins < payoutThreshold)
+            {
+                // Only do monthly tests since we dont care about days if its going to be greater than a month
+                result = result.AddMonths(1);
+                double testBal = walletBalance + monthCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    testBal += monthCoins;
+                    result = result.AddMonths(1);
+                }
+            }
+            else if (walletBalance + dayCoins < payoutThreshold)
+            {
+                result = result.AddDays(1);
+                double testBal = walletBalance + dayCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    if (testBal + dayCoins < payoutThreshold)
+                    {
+                        testBal += dayCoins;
+                        result = result.AddDays(1);
+                    }
+                    else if (testBal + hourCoins < payoutThreshold)
+                    {
+                        testBal += hourCoins;
+                        result = result.AddHours(1);
+                    }
+                    else if (testBal + minuteCoins < payoutThreshold)
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                    else
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                }
+            }
+            else if (walletBalance + hourCoins < payoutThreshold)
+            {
+                result = result.AddHours(1);
+                double testBal = walletBalance + hourCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    if (testBal + hourCoins < payoutThreshold)
+                    {
+                        testBal += hourCoins;
+                        result = result.AddHours(1);
+                    }
+                    else if (testBal + minuteCoins < payoutThreshold)
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                    else
+                    {
+                        testBal += minuteCoins;
+                        result = result.AddMinutes(1);
+                    }
+                }
+            }
+            else
+            {
+                // Check for the minutes lefts
+                result = result.AddMinutes(1);
+                double testBal = walletBalance + minuteCoins;
+                while (testBal < payoutThreshold) // Loop until we break the payout limit
+                {
+                    testBal += minuteCoins;
+                    result = result.AddMinutes(1);
+                }
+            }
+            return result;
         }
     }
 }
