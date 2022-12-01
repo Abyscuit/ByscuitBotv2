@@ -441,7 +441,7 @@ namespace ByscuitBotv2.Modules
         [Command("Stats")]
         [Alias("checkstats", "showstats")]
         [Summary("Show the user stats - Usage: {0}user <@user(optional)>")]
-        public async Task Stats(SocketGuildUser user =null, [Remainder] string text = "")
+        public async Task Stats(SocketGuildUser user = null, [Remainder] string text = "")
         {
             //Display credits, join date
             if (user == null) user = Context.User as SocketGuildUser;
@@ -462,7 +462,8 @@ namespace ByscuitBotv2.Modules
             string[] userData = GetUserRankTime(user);
             string rank = userData[0];
             string time = userData[1];
-            
+            Account account = CreditsSystem.GetAccount(user);
+
             EmbedBuilder embed = new EmbedBuilder();
             embed.WithAuthor($"{username} Stats", Context.Guild.IconUrl);
             embed.WithThumbnailUrl(user.GetAvatarUrl());
@@ -474,6 +475,7 @@ namespace ByscuitBotv2.Modules
                 //new EmbedFieldBuilder().WithIsInline(true).WithName("BSC Enabled").WithValue(BinanceWallet.GetAccount(user) != null ? "Yes" : "No"), // Update when BSC is enabled on the bot
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Voice Chat Rank").WithValue(rank),
                 new EmbedFieldBuilder().WithIsInline(true).WithName("Voice Chat Time").WithValue(time),
+                new EmbedFieldBuilder().WithIsInline(true).WithName("OpenAI Credits").WithValue(account.credits),
 
             });
             await Context.Channel.SendMessageAsync("", false, embed.Build());

@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace ByscuitBotv2.Data
 {
-    // Byscoin accounts
+    // OpenAI accounts
     public class Account
     {
         public ulong discordID;
         public string username;
         public string discriminator;
-        public double credits;
+        public int credits;
         public string[] redeemed;
         public List<Transaction> transactions = new List<Transaction>();
     }
@@ -39,7 +39,6 @@ namespace ByscuitBotv2.Data
         static string path = "Resources/";
         static string file = "CredAccounts.json";
         public static string fullpath = path + file;
-        public static double totalcredits = 1000000000;
         public static void LoadAccounts(SocketGuild guild)
         {
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
@@ -52,7 +51,7 @@ namespace ByscuitBotv2.Data
         {
             // Write the actual stuff
             guild.GetUsersAsync().ForEachAsync(m => {
-                foreach(RestGuildUser user in m)
+                foreach(Discord.IGuildUser user in m)
                 {
                     if (user.IsBot) continue; // Dont create an account for the bots
                     Account account = new Account();
@@ -69,10 +68,9 @@ namespace ByscuitBotv2.Data
                     Utility.printDEBUG("Total Days: " + totaldays);
                     double premiumTime = (user.PremiumSince.HasValue ? user.PremiumSince.Value.Subtract(DateTime.Now).TotalDays * -1 : 0);
                     Utility.printDEBUG("Premium Days: " + premiumTime);
-                    Utility.printDEBUG("Credits: " + account.credits + " | " + string.Format("{0:p}", (account.credits / totalcredits)) + "\n-------------------");
+                    Utility.printDEBUG("Credits: " + account.credits + "\n-------------------");
                 }
             }).Wait();
-            Utility.printDEBUG($"Total Credits Supply: {totalcredits:N0}");
             SaveFile();
         }
         public static Account AddUser(SocketGuildUser user)
@@ -93,7 +91,7 @@ namespace ByscuitBotv2.Data
             Utility.printDEBUG("Total Days: " + totaldays);
             double premiumTime = (user.PremiumSince.HasValue ? user.PremiumSince.Value.Subtract(DateTime.Now).TotalDays * -1 : 0);
             Utility.printDEBUG("Premium Days: " + premiumTime);
-            Utility.printDEBUG("Credits: " + account.credits + " | " + string.Format("{0:p}", (account.credits / totalcredits)) + "\n-------------------");
+            Utility.printDEBUG("Credits: " + account.credits + "\n-------------------");
             SaveFile();
             return account;
         }

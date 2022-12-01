@@ -30,6 +30,7 @@ namespace ByscuitBotv2.Modules
 
         #region internal token interaction
         // RECODE ALL SO IT WILL BE USED FOR INTERNAL TRANSFERS
+        /*
         [Command("Wallet")]
         [Alias("byscoin", "coins", "bal", "balance")]
         [Summary("Show the amount of Byscoin in your wallet - Usage: {0}Wallet")]
@@ -187,7 +188,7 @@ namespace ByscuitBotv2.Modules
             Byscoin.Deposit.CreateDepositClaim(address, user.Id);
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
-
+        */
         [Command("Withdraw")]
         [Alias("byscwithdraw", "withdrawbysc")]
         [Summary("Withdraw BYSC from your wallet to a Binance Smart Chain Wallet (BEP-20) - Usage: {0}Withdraw <amount> <address>")]

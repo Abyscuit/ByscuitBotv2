@@ -125,7 +125,7 @@ namespace ByscuitBotv2.Byscoin
                             SocketGuildUser user = CommandHandler.Byscuits.GetUser(claim.discordID);
                             Account acc = CreditsSystem.GetAccount(user);
                             claim.transactionHash = transaction.hash;
-                            acc.credits += (double)Web3.Convert.FromWei(BigInteger.Parse(transaction.value));
+                            acc.credits += (int)Web3.Convert.FromWei(BigInteger.Parse(transaction.value));
                             claim.state = DepositState.Completed;
                             CreditsSystem.SaveFile();
                             Utility.DirectMessage(user, $"> Confirmed transaction of {(double)Web3.Convert.FromWei(BigInteger.Parse(transaction.value))} BYSC").Wait();
