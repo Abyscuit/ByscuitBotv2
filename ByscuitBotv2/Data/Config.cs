@@ -19,6 +19,7 @@ namespace ByscuitBotv2.Data
         public string TWITCH_CLIENT_ID = "";
         public string TWITCH_SECRET = "";
         public string BSCSCAN_API_KEY = "";
+        public string OPENAI_API_KEY = "";
         public float NANOPOOL_PAYOUT = 0.4f; // Default level 0.4f
 
         // Log Levels
@@ -80,7 +81,7 @@ namespace ByscuitBotv2.Data
             $"TWITCH_CLIENT_ID: {TWITCH_CLIENT_ID}" +
             $"TWITCH_SECRET: {TWITCH_SECRET}" +
             $"BSCSCAN_API_KEY: {BSCSCAN_API_KEY}" +
-            $"NANOPOOL_PAYOUT: {NANOPOOL_PAYOUT}" +
+            $"OPENAI_API_KEY: {OPENAI_API_KEY}" +
             $"DEBUG_LEVEL: {DEBUG_LEVEL}";
         }
     }

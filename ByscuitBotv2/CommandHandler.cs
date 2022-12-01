@@ -28,6 +28,7 @@ namespace byscuitBot
         bool disconnected = false;
         string user = "";
         public static SocketRole PremiumByscuitRole = null;
+        public static SocketRole AIUserRole = null;
         public static SocketGuild Byscuits = null;
         Random random = new Random();
 
@@ -289,12 +290,14 @@ namespace byscuitBot
 
         private Task Client_Ready()
         {
+            ulong AIUserID = 1047742786990002256;
             printConsole("Ready for inputs!");
             user = client.CurrentUser.ToString();
             Accounts.Load();
             Roles.Load();
             Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
             PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role 765403412568735765
+            AIUserRole = Byscuits.GetRole(AIUserID);
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
             CashoutSystem.Load();

@@ -273,6 +273,7 @@
     <Compile Include="Byscoin\CashoutSystem.cs" />
     <Compile Include="Byscoin\Deposit.cs" />
     <Compile Include="CommandHandler.cs" />
+    <Compile Include="Commands\OpenAIComs.cs" />
     <Compile Include="Data\Account.cs" />
     <Compile Include="Data\Accounts.cs" />
     <Compile Include="Data\BinanceWallet.cs" />
@@ -286,9 +287,10 @@
     <Compile Include="Lotto\LottoCommands.cs" />
     <Compile Include="Lotto\LottoEntry.cs" />
     <Compile Include="Lotto\LottoSystem.cs" />
-    <Compile Include="Modules\BSCComs.cs" />
-    <Compile Include="Modules\ByscComs.cs" />
-    <Compile Include="Modules\Misc.cs" />
+    <Compile Include="Commands\BSCComs.cs" />
+    <Compile Include="Commands\ByscComs.cs" />
+    <Compile Include="Commands\Misc.cs" />
+    <Compile Include="Modules\OpenAI.cs" />
     <Compile Include="Modules\Result.cs" />
     <Compile Include="Modules\Steam.cs" />
     <Compile Include="Modules\SteamAccount.cs" />
