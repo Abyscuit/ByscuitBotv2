@@ -290,7 +290,10 @@
     <Compile Include="Commands\BSCComs.cs" />
     <Compile Include="Commands\ByscComs.cs" />
     <Compile Include="Commands\Misc.cs" />
-    <Compile Include="Modules\OpenAI.cs" />
+    <Compile Include="Modules\OpenAI\Config.cs" />
+    <Compile Include="Modules\OpenAI\GPT-3.cs" />
+    <Compile Include="Modules\OpenAI\Images.cs" />
+    <Compile Include="Modules\OpenAI\Moderation.cs" />
     <Compile Include="Modules\Result.cs" />
     <Compile Include="Modules\Steam.cs" />
     <Compile Include="Modules\SteamAccount.cs" />
