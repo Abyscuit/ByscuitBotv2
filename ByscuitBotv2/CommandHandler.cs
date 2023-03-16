@@ -29,6 +29,8 @@ namespace byscuitBot
         string user = "";
         public static SocketRole PremiumByscuitRole = null;
         public static SocketRole AIUserRole = null;
+        public ulong UnbakedByscuitID = 1046926179552219226;
+        public static SocketRole UnbakedByscuitRole = null; // 1046926179552219226
         public static SocketGuild Byscuits = null;
         Random random = new Random();
 
@@ -298,14 +300,18 @@ namespace byscuitBot
             Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
             PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role 765403412568735765
             AIUserRole = Byscuits.GetRole(AIUserID);
+            UnbakedByscuitRole = Byscuits.GetRole(UnbakedByscuitID);
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
             CashoutSystem.Load();
             LottoSystem.Load();
             Deposit.Load();
+            // Nanopool stuff
+            /*
             WorkerStates.Load();
             WorkerStates.UpdateStates();
             Nanopool.payoutThreshold = Program.config.NANOPOOL_PAYOUT;
+            */
             Utility.SetDebugLevel(Program.config.DEBUG_LEVEL);
             return Task.CompletedTask;
         }
@@ -446,7 +452,7 @@ namespace byscuitBot
             embed.Title = "Server Report";
             embed.WithAuthor("Server Report", user.GetAvatarUrl());
             */
-
+            await user.AddRoleAsync(UnbakedByscuitRole);
             printConsole(username + " joined " + user.Guild.Name);
             await checkStats(user.Guild); // Update user count
         }
