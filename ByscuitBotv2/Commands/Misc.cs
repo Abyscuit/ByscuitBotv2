@@ -372,21 +372,6 @@ namespace ByscuitBotv2.Modules
         #endregion
 
 
-
-        /*          NOPE NOT ANYMORE LOL
-         * ------------------------------------------- *
-         *   You need to create a function for email   *
-         *   generation and or inbox with imap?        *
-         *   Either way create a method for attack     *
-         *   detection and more function calls!        *
-         *   Add a function for hack/csgo team!        *
-         *   Add a function for steam authentication   *
-         *   for users? Add a call for reporting and   *
-         *   commending csgo players (zonerbot style)  *
-         * ------------------------------------------- *
-         */
-
-
         [Command("RequestDJ")]
         [Alias("dj", "musicrole", "musicperms", "djrole")]
         [Summary("Gives requesting user the permission to type in #music - Usage: {0}dj")]
