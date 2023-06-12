@@ -17,7 +17,7 @@ namespace ByscuitBotv2
     class Program
     {
         public static DiscordSocketClient client;
-        public static string game = "In Development :)";
+        public static string game = "for commands";
         CommandHandler handler;
         private IServiceProvider services;
         public static Config config;
@@ -58,7 +58,7 @@ namespace ByscuitBotv2
 
             client.Log += Client_Log;
             client.ReactionAdded += Client_ReactionAdded;
-            await client.SetGameAsync(game);
+            await client.SetGameAsync(game, type: ActivityType.Watching);
             await client.LoginAsync(Discord.TokenType.Bot, config.DISCORD_API_KEY);
             await client.StartAsync();
             
