@@ -64,18 +64,20 @@ namespace ByscuitBotv2.Modules.OpenAI
                 Utility.printERROR("Open.AI Moderation missing parameter");
                 throw new Exception("Missing Parameter");
             }
-            string escapedInput = prompt.Replace("\"", "\\\"");
-            string model = "gpt-3.5-turbo";
-            int maxTokens = 2000;
+            string escapedInput = JsonConvert.SerializeObject(prompt); //prompt.Replace("\"", "\\\"");
+            Console.WriteLine("Prompt:\n" + escapedInput);
+            string model = "gpt-4";
+            int maxTokens = 3000;
             //string json = $"{{\"model\":\"{model}\",\"prompt\":\"{escapedInput}\"," +
             //        $"\"max_tokens\":{maxTokens},\"stream\":false}}";
             string json = $"{{\"model\":\"{model}\",\"messages\":[" +
-                    $"{{\"role\":\"user\",\"content\":\"{escapedInput}\"}}]," +
+                    $"{{\"role\":\"user\",\"content\":{escapedInput}}}]," +
                     $"\"max_tokens\":{maxTokens},\"stream\":false}}";
             Utility.printConsole("json: " + json);
             var jsonContent = new StringContent(json);
             jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
             HttpClient httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromMinutes(30);
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", API_KEY);
             var httpResponse = await httpClient.PostAsync(API_COMPLETIONS, jsonContent);
             string result = await httpResponse.Content.ReadAsStringAsync();

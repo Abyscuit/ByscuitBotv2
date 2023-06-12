@@ -236,7 +236,7 @@ namespace ByscuitBotv2.Commands
                 try
                 {
                     GPT_3.Response response = await GPT_3.CreateCompletion(prompt);
-                    double creditsUsed = (double)response.usage.total_tokens / 1000.0000;
+                    double creditsUsed = (double)response.usage.total_tokens / 1000.0000 * 1.5;
                     creditsUsed += 0.5;
                     if (creditsUsed > 0 && creditsUsed < 1) creditsUsed = 1;
                     account.credits -= (int)creditsUsed;
@@ -246,14 +246,22 @@ namespace ByscuitBotv2.Commands
                         if (user.Roles.Contains(CommandHandler.AIUserRole))
                             await user.RemoveRoleAsync(CommandHandler.AIUserRole);
                     }
-                    string msg = $"> {Context.User.Mention} *{(int)creditsUsed} credits used | {account.credits} credits remaining*" +
-                        $"\n> **Prompt:** __{prompt}__";
+                    EmbedBuilder embed = new EmbedBuilder();
+                    embed.WithAuthor($"ChatGPT Request", Context.Guild.IconUrl);
+                    embed.WithThumbnailUrl(user.GetAvatarUrl());
+                    embed.WithColor(36, 122, 191);
+                    embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(true).WithName("Credits Used").WithValue((int)creditsUsed),
+                        new EmbedFieldBuilder().WithIsInline(true).WithName("Remaining Credits").WithValue(account.credits)
+                    });
+                    embed.WithDescription(prompt);
+                    //string msg = $"> {Context.User.Mention} *{(int)creditsUsed} credits used | {account.credits} credits remaining*" +
+                    //    $"\n> **Prompt:** __{prompt}__";
                     string responseText = response.choices[0].message.content;
                     int maxLength = 1500;
-                    await Context.Channel.SendMessageAsync(msg);
+                    await Context.Channel.SendMessageAsync(Context.User.Mention, embed: embed.Build());
                     if (responseText.Length > maxLength)
                     {
-                        // Separate by every word
+                        // Separate by every word and new line
                         string[] words = responseText.Split(' ');
                         string res = "";
                         for (int i = 0; i < words.Length; i++)
