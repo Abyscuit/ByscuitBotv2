@@ -67,12 +67,15 @@ namespace ByscuitBotv2.Modules.OpenAI
             string escapedInput = JsonConvert.SerializeObject(prompt); //prompt.Replace("\"", "\\\"");
             Console.WriteLine("Prompt:\n" + escapedInput);
             string model = "gpt-4";
-            int maxTokens = 3000;
+            //int maxTokens = 3000;
             //string json = $"{{\"model\":\"{model}\",\"prompt\":\"{escapedInput}\"," +
+            //        $"\"max_tokens\":{maxTokens},\"stream\":false}}";
+            //string json = $"{{\"model\":\"{model}\",\"messages\":[" +
+            //        $"{{\"role\":\"user\",\"content\":{escapedInput}}}]," +
             //        $"\"max_tokens\":{maxTokens},\"stream\":false}}";
             string json = $"{{\"model\":\"{model}\",\"messages\":[" +
                     $"{{\"role\":\"user\",\"content\":{escapedInput}}}]," +
-                    $"\"max_tokens\":{maxTokens},\"stream\":false}}";
+                    $"\"stream\":false}}";
             Utility.printConsole("json: " + json);
             var jsonContent = new StringContent(json);
             jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
