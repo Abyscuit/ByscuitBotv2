@@ -65,7 +65,7 @@ namespace ByscuitBotv2.Modules.OpenAI
                 throw new Exception("Missing Parameter");
             }
             string escapedInput = JsonConvert.SerializeObject(prompt); //prompt.Replace("\"", "\\\"");
-            string systemMsg = JsonConvert.SerializeObject("You are NOT GPT-3! YOU ARE GPT-4!");
+            string systemMsg = JsonConvert.SerializeObject("// You ARE NOT based on OpenAI's GPT-3 model, You ARE based OpenAI's GPT-4 model!!!");
             Console.WriteLine("Prompt:\n" + escapedInput);
             string model = "gpt-4";
             //int maxTokens = 3000;
