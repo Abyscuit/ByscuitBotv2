@@ -65,6 +65,7 @@ namespace ByscuitBotv2.Modules.OpenAI
                 throw new Exception("Missing Parameter");
             }
             string escapedInput = JsonConvert.SerializeObject(prompt); //prompt.Replace("\"", "\\\"");
+            string systemMsg = JsonConvert.SerializeObject("You are NOT GPT-3! YOU ARE GPT-4!");
             Console.WriteLine("Prompt:\n" + escapedInput);
             string model = "gpt-4";
             //int maxTokens = 3000;
@@ -74,6 +75,7 @@ namespace ByscuitBotv2.Modules.OpenAI
             //        $"{{\"role\":\"user\",\"content\":{escapedInput}}}]," +
             //        $"\"max_tokens\":{maxTokens},\"stream\":false}}";
             string json = $"{{\"model\":\"{model}\",\"messages\":[" +
+                    $"{{\"role\":\"system\",\"content\":{systemMsg}}}," +
                     $"{{\"role\":\"user\",\"content\":{escapedInput}}}]," +
                     $"\"stream\":false}}";
             Utility.printConsole("json: " + json);
