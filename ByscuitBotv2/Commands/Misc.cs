@@ -411,14 +411,15 @@ namespace ByscuitBotv2.Modules
         }
 
 
-        [Command("Ban")]
-        [Alias("gtfo", "bye")]
-        [RequireUserPermission(GuildPermission.Administrator)]
-        [Summary("Bans a user with an optional reason - Usage: {0}ban <user> <reason>")]
-        public async Task Ban(SocketGuildUser user, [Remainder]string text = "")
-        {
-            await Task.CompletedTask;
-        }
+        //[Command("Ban")]
+        //[Alias("gtfo", "bye")]
+        //[RequireUserPermission(GuildPermission.Administrator)]
+        //[Summary("Bans a user with an optional reason - Usage: {0}ban <user> <reason>")]
+        //public async Task Ban(SocketGuildUser user, [Remainder] string text = "")
+        //{
+        //    await Task.CompletedTask;
+        //}
+
 
 
         #region Check stats

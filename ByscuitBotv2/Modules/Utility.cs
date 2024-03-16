@@ -96,28 +96,31 @@ namespace ByscuitBotv2.Modules
         #endregion
 
         #region Messaging Functions
-        public static async Task DirectMessage(SocketGuildUser user, string msg = "")
+        public static async Task<IUserMessage> DirectMessage(SocketGuildUser user, string msg = "")
         {
             // Get or create the Direct channel then send message
             var x = await user.CreateDMChannelAsync();
-            
-            await x.SendMessageAsync(msg);
+
+            var sentMsg = await x.SendMessageAsync(msg);
 
             // Print to console that we sent the message
-            string username = user.Username + "#" + user.Discriminator;
+            string username = user.ToString();
             string text = $"{username} was sent a private message";
             printLOG(text);
+            return sentMsg;
         }
-        public static async Task DirectMessage(SocketGuildUser user,string msg = "", Embed embed = null)
+        public static async Task<IUserMessage> DirectMessage(SocketGuildUser user,string msg = "", Embed embed = null)
         {
             // Get or create the Direct channel then send message
             var x = await user.CreateDMChannelAsync();
-            await x.SendMessageAsync(msg, false, embed);
+            var sentMsg = await x.SendMessageAsync(msg, false, embed);
+            
 
             // Print to console that we sent the message
-            string username = user.Username + "#" + user.Discriminator;
+            string username = user.ToString();
             string text = $"{username} was sent a private embedded message";
             printLOG(text);
+            return sentMsg;
         }
         #endregion
 
@@ -145,6 +148,17 @@ namespace ByscuitBotv2.Modules
         public static void SetDebugLevel(Discord.LogSeverity dbgLvl)
         {
             DEBUG_LEVEL = dbgLvl;
+        }
+
+        public static SocketGuildUser[] GetUndefeanedUsersFromChannel(SocketGuildChannel channel)
+        {
+            List<SocketGuildUser> users = new List<SocketGuildUser>();
+            foreach (SocketGuildUser user in channel.Users)
+            {
+                if (user == null || user.IsBot) continue;
+                if(!user.IsSelfDeafened) users.Add(user);
+            }
+            return users.ToArray();
         }
 
         // Add separate string by words
