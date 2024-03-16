@@ -72,13 +72,18 @@ namespace byscuitBot
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
+            if (arg3.User.IsBot) return;
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
             Console.WriteLine($"arg1: {arg1.Id}");
             Console.WriteLine($"arg2: {arg2.Id}");
             Console.WriteLine($"VCKick.DirectMessages: {VCKick.DirectMessages.Length}");
             Console.WriteLine($"VCKick.VotedMessages: {VCKick.VotedMessages.Count}");
+            bool isDMInList = VCKick.CheckMsgInVote(arg1.Id);
+            bool isVoted = VCKick.CheckMsgAlreadyVoted(arg1.Id);
 
-            if (VCKick.DirectMessages.Contains(arg1.Value) && !VCKick.VotedMessages.Contains(arg1.Value)) {
+            Console.WriteLine($"isDMInList: {isDMInList}");
+            Console.WriteLine($"isVoted: {isVoted}");
+            if (isDMInList && !isVoted) {
                 
                 await arg3.Message.Value.ModifyAsync(m =>
                 {

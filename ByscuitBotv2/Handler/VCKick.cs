@@ -58,5 +58,22 @@ namespace ByscuitBotv2.Handler
         {
             DirectMessages = directMessages;
         }
+
+        public static bool CheckMsgInVote(ulong MessageID)
+        {
+            for(int i = 0; i < DirectMessages.Length; i++)
+            {
+                if (DirectMessages[i].Id == MessageID) return true;
+            }
+            return false;
+        }
+        public static bool CheckMsgAlreadyVoted(ulong MessageID)
+        {
+            for (int i = 0; i < VotedMessages.Count; i++)
+            {
+                if (VotedMessages[i].Id == MessageID) return true;
+            }
+            return false;
+        }
     }
 }
