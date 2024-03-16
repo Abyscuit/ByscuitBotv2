@@ -73,8 +73,8 @@ namespace byscuitBot
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
-            Console.WriteLine($"arg1: {arg1}");
-            Console.WriteLine($"arg2: {arg2}");
+            Console.WriteLine($"arg1: {arg1.Id}");
+            Console.WriteLine($"arg2: {arg2.Id}");
             Console.WriteLine($"VCKick.DirectMessages: {VCKick.DirectMessages.Length}");
             Console.WriteLine($"VCKick.VotedMessages: {VCKick.VotedMessages.Count}");
 
