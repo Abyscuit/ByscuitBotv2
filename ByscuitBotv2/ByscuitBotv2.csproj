@@ -274,6 +274,7 @@
     <Compile Include="Byscoin\Deposit.cs" />
     <Compile Include="CommandHandler.cs" />
     <Compile Include="Commands\OpenAIComs.cs" />
+    <Compile Include="Commands\PermComs.cs" />
     <Compile Include="Data\Account.cs" />
     <Compile Include="Data\Accounts.cs" />
     <Compile Include="Data\BinanceWallet.cs" />
@@ -284,6 +285,7 @@
     <Compile Include="Data\SmartContract.cs" />
     <Compile Include="Data\Spam.cs" />
     <Compile Include="Data\WorkerState.cs" />
+    <Compile Include="Handler\VCKick.cs" />
     <Compile Include="Lotto\LottoCommands.cs" />
     <Compile Include="Lotto\LottoEntry.cs" />
     <Compile Include="Lotto\LottoSystem.cs" />
