@@ -16,7 +16,7 @@ namespace ByscuitBotv2.Handler
         public SocketUser Target { get; set; }
         public static int VotesNeeded, YesVotes = 0, NoVotes = 0;
         public static IUserMessage[] DirectMessages;
-        public static List<IUserMessage> VotedMessages;
+        public static List<IUserMessage> VotedMessages = new List<IUserMessage>();
         public TimeSpan TimeOutTime; //60secs, 5mins, 10mins, 1hour, 1day, 1week
         public static DateTime Expiration;
         public string Reason = "";
@@ -52,6 +52,11 @@ namespace ByscuitBotv2.Handler
                 .WithCurrentTimestamp();
 
             return embed.Build();
+        }
+
+        public void SetDirectMessages(IUserMessage[] directMessages)
+        {
+            DirectMessages = directMessages;
         }
     }
 }

@@ -53,6 +53,7 @@ namespace ByscuitBotv2.Commands
                 }
             }
             Console.WriteLine("Channels: " + Messages.Count);
+            VoteKick.SetDirectMessages(Messages.ToArray());
             RequestOptions options = RequestOptions.Default;
             options.AuditLogReason = text;
             //await Target.SetTimeOutAsync(TimeSpan.FromSeconds(1), options);
