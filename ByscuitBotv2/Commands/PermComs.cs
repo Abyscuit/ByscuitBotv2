@@ -41,7 +41,7 @@ namespace ByscuitBotv2.Commands
             List<IUserMessage> Messages = new List<IUserMessage>();
             for(int i =0;i<UsersInChat.Length;i++) {
                 ulong UserID = UsersInChat[i].Id;
-                if (UserID != Target.VoiceChannel.Id && UserID != Initiator.Id)
+                if (UserID != Target.Id && UserID != Initiator.Id)
                 {
                     IUserMessage message = Utility.DirectMessage(UsersInChat[i], embed: VoteKick.CreatePrivateMessage()).GetAwaiter().GetResult();
                     var YesEmoji = new Emoji("✅");
