@@ -75,6 +75,9 @@ namespace byscuitBot
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
             Console.WriteLine($"arg1: {arg1}");
             Console.WriteLine($"arg2: {arg2}");
+            Console.WriteLine($"VCKick.DirectMessages: {VCKick.DirectMessages.Length}");
+            Console.WriteLine($"VCKick.VotedMessages: {VCKick.VotedMessages.Count}");
+
             if (VCKick.DirectMessages.Contains(arg1.Value) && !VCKick.VotedMessages.Contains(arg1.Value)) {
                 
                 await arg3.Message.Value.ModifyAsync(m =>
