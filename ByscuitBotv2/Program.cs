@@ -57,7 +57,6 @@ namespace ByscuitBotv2
             
 
             client.Log += Client_Log;
-            client.ReactionAdded += Client_ReactionAdded;
             await client.SetGameAsync(game, type: ActivityType.Watching);
             await client.LoginAsync(Discord.TokenType.Bot, config.DISCORD_API_KEY);
             await client.StartAsync();
@@ -67,11 +66,6 @@ namespace ByscuitBotv2
 
             handler = new CommandHandler();
             await handler.InitializeAsync(client);
-        }
-
-        private async Task Client_ReactionAdded(Cacheable<Discord.IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
-        {
-            
         }
 
         private async Task Client_Log(Discord.LogMessage msg)

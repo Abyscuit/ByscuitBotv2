@@ -64,7 +64,12 @@ namespace byscuitBot
             this.client.LoggedOut += Client_LoggedOut;
             this.client.LoggedIn += Client_LoggedIn;
             this.client.Disconnected += Client_Disconnected;
-            
+            this.client.ReactionAdded += Client_ReactionAdded;
+        }
+
+        private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
+        {
+            throw new NotImplementedException();
         }
 
         int postureTime = DateTime.Now.Hour / 2;
@@ -117,8 +122,6 @@ namespace byscuitBot
         private Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> arg1, SocketGuildUser arg2)
         {
             printDEBUG($"GuildMember Updated | ARG 1: {arg1.Value} | ARG 2: {arg2}");
-            if(arg1.Id == 215535755727077379) // FubiRock nickname check
-                if (arg2.Nickname != "FaggotRock") arg2.ModifyAsync(m => { m.Nickname = "FaggotRock"; }) ;
             
             return Task.CompletedTask;
         }
@@ -362,6 +365,10 @@ namespace byscuitBot
             if(!bBotID) BotID = client.CurrentUser.Id;
 
             SocketGuildUser user = (SocketGuildUser)context.User;
+            bool isDM = context.IsPrivate;
+
+            if (isDM) { HandlePrivateMessage(context); return; }
+
             SocketRole fByscuit = null;
             foreach(SocketRole role in context.Guild.Roles)
             {
@@ -609,6 +616,13 @@ namespace byscuitBot
         public void printLOG(object obj)
         {
             Utility.printLOG(obj);
+        }
+        #endregion
+
+        #region Message Handlers
+        private void HandlePrivateMessage(SocketCommandContext context)
+        {
+            // Do stuff
         }
         #endregion
     }
