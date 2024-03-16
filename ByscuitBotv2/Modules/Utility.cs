@@ -150,10 +150,10 @@ namespace ByscuitBotv2.Modules
             DEBUG_LEVEL = dbgLvl;
         }
 
-        public static SocketGuildUser[] GetUndefeanedUsersFromChannel(SocketGuildChannel channel)
+        public static SocketGuildUser[] GetUndefeanedUsersFromChannel(SocketVoiceChannel channel)
         {
             List<SocketGuildUser> users = new List<SocketGuildUser>();
-            foreach (SocketGuildUser user in channel.Users)
+            foreach (SocketGuildUser user in channel.ConnectedUsers)
             {
                 if (user == null || user.IsBot) continue;
                 if(!user.IsSelfDeafened) users.Add(user);

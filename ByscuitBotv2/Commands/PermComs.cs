@@ -30,6 +30,11 @@ namespace ByscuitBotv2.Commands
                 await Context.Channel.SendMessageAsync("> There is already a vote in progress!");
                 return; 
             }
+            if (!Target.VoiceChannel.ConnectedUsers.Contains(Initiator))
+            {
+                await Context.Channel.SendMessageAsync("> You must be in the same voice channel to kick the user!");
+                return;
+            }
             SocketGuildUser[] UsersInChat = Utility.GetUndefeanedUsersFromChannel(Target.VoiceChannel);
             VCKick VoteKick = new VCKick(Initiator, Target, text, UsersInChat.Length - 2);
             // Make sure there is at least 5 people minus the Initiator and Target.
