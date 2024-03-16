@@ -87,9 +87,10 @@ namespace byscuitBot
                 IUserMessage message = await arg1.GetOrDownloadAsync();
                 await message.ModifyAsync(m =>
                 {
+                    var OldEmbed = m.Embed.GetValueOrDefault();
                     EmbedBuilder embed = new EmbedBuilder()
                         .WithColor(Color.Red)
-                        .WithTitle(m.Embed.Value.Title)
+                        .WithTitle(OldEmbed.Title)
                         .WithDescription($"You Voted {arg3.Emote}")
                         .WithCurrentTimestamp();
                     m.Embed = embed.Build();
