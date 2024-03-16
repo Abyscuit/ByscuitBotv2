@@ -30,8 +30,8 @@ namespace ByscuitBotv2.Commands
                 await Context.Channel.SendMessageAsync("> There is already a vote in progress!");
                 return; 
             }
-            VCKick VoteKick = new VCKick();
             SocketGuildUser[] UsersInChat = Utility.GetUndefeanedUsersFromChannel(Target.VoiceChannel);
+            VCKick VoteKick = new VCKick(Initiator, Target, text, UsersInChat.Length - 2);
             // Make sure there is at least 5 people minus the Initiator and Target.
             List<IUserMessage> Messages = new List<IUserMessage>();
             for(int i =0;i<UsersInChat.Length;i++) {
@@ -39,8 +39,8 @@ namespace ByscuitBotv2.Commands
                 if (UserID != Target.VoiceChannel.Id && UserID != Initiator.Id)
                 {
                     IUserMessage message = Utility.DirectMessage(UsersInChat[i], embed: VoteKick.CreatePrivateMessage()).GetAwaiter().GetResult();
-                    var YesEmoji = new Emoji("");
-                    var NoEmoji = new Emoji("");
+                    var YesEmoji = new Emoji("✅");
+                    var NoEmoji = new Emoji("❌");
                     Emoji[] emojis = {YesEmoji, NoEmoji};
                     await message.AddReactionsAsync(emojis);
                     Console.WriteLine("Channel add: " + message.Id);

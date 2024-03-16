@@ -1,12 +1,15 @@
 ﻿using ByscuitBotv2;
 using ByscuitBotv2.Byscoin;
+using ByscuitBotv2.Commands;
 using ByscuitBotv2.Data;
+using ByscuitBotv2.Handler;
 using ByscuitBotv2.Lotto;
 using ByscuitBotv2.Modules;
 using Discord;
 using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
+using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,7 +72,25 @@ namespace byscuitBot
 
         private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
-            throw new NotImplementedException();
+            if (VCKick.DirectMessages.Contains(arg1.Value) && !VCKick.VotedMessages.Contains(arg1.Value)) {
+                Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
+                
+                arg3.Message.Value.ModifyAsync(m =>
+                {
+                    EmbedBuilder embed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle(m.Embed.Value.Title)
+                        .WithDescription($"You Voted {arg3.Emote}")
+                        .WithCurrentTimestamp();
+                    m.Embed = embed.Build();
+                });
+                VCKick.VotedMessages.Add(arg1.Value);
+                if (VCKick.VotedMessages.Count >= VCKick.VotesNeeded)
+                {
+                    PermComs.VOTE_IN_PROGRESS = false;
+                }
+            }
+            return Task.CompletedTask;
         }
 
         int postureTime = DateTime.Now.Hour / 2;
@@ -78,6 +99,11 @@ namespace byscuitBot
         public static DateTime WS_UPDATED_DATE = DateTime.Now;
         private Task Client_LatencyUpdated(int arg1, int arg2)
         {
+            // Check if Vote in progress
+            if (PermComs.VOTE_IN_PROGRESS)
+            {
+                if(VCKick.Expiration <= DateTime.Now) PermComs.VOTE_IN_PROGRESS=false;
+            }
             /*
             // Posture Check
             SocketGuild Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
