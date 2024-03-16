@@ -2,6 +2,7 @@
 using ByscuitBotv2.Modules;
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
@@ -14,11 +15,21 @@ namespace ByscuitBotv2.Commands
     public class PermComs : ModuleBase<SocketCommandContext>
     {
         public static bool VOTE_IN_PROGRESS = false;
+        public static RestUserMessage VOTE_MESSAGE = null;
         [Command("VCKick")]
         [Alias("voicekick", "kickvc", "votekick")]
         [Summary("Starts a timeout vote from for a user with an optional reason - Usage: {0}vckick <user> <reason>")]
         public async Task VCKick(SocketGuildUser Target, [Remainder] string text = "")
         {
+            if (Context.User.Id == Target.Id)
+            {
+                await Context.Channel.SendMessageAsync("> You can't start a vote kick against yourself!");
+                return;
+            }
+            RequestOptions deleteOptions = RequestOptions.Default;
+            deleteOptions.AuditLogReason = "Delete vote message";
+            await Context.Message.DeleteAsync(deleteOptions);
+
             SocketGuildUser Initiator = Context.User as SocketGuildUser;
             if (Initiator.VoiceChannel == null)
             {
@@ -44,16 +55,14 @@ namespace ByscuitBotv2.Commands
                 if (UserID != Target.Id && UserID != Initiator.Id)
                 {
                     IUserMessage message = Utility.DirectMessage(UsersInChat[i], embed: VoteKick.CreatePrivateMessage()).GetAwaiter().GetResult();
-                    var YesEmoji = new Emoji("✅");
-                    var NoEmoji = new Emoji("❌");
-                    Emoji[] emojis = {YesEmoji, NoEmoji};
-                    await message.AddReactionsAsync(emojis);
+                    await message.AddReactionsAsync(Handler.VCKick.EMOJIS);
                     Console.WriteLine("Channel add: " + message.Id);
                     Messages.Add(message);
                 }
             }
             Console.WriteLine("Channels: " + Messages.Count);
             VoteKick.SetDirectMessages(Messages.ToArray());
+            VOTE_MESSAGE = await Context.Channel.SendMessageAsync(embed: Handler.VCKick.CreatePublicMessage());
             RequestOptions options = RequestOptions.Default;
             options.AuditLogReason = text;
             //await Target.SetTimeOutAsync(TimeSpan.FromSeconds(1), options);

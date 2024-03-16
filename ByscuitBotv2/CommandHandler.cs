@@ -84,8 +84,8 @@ namespace byscuitBot
             Console.WriteLine($"isDMInList: {isDMInList}");
             Console.WriteLine($"isVoted: {isVoted}");
             if (isDMInList && !isVoted) {
-                
-                await arg3.Message.Value.ModifyAsync(m =>
+                IUserMessage message = await arg1.GetOrDownloadAsync();
+                await message.ModifyAsync(m =>
                 {
                     EmbedBuilder embed = new EmbedBuilder()
                         .WithColor(Color.Red)
@@ -95,10 +95,7 @@ namespace byscuitBot
                     m.Embed = embed.Build();
                 });
                 VCKick.VotedMessages.Add(arg1.Value);
-                if (VCKick.VotedMessages.Count >= VCKick.VotesNeeded)
-                {
-                    PermComs.VOTE_IN_PROGRESS = false;
-                }
+                VCKick.ProcessVote(arg3.Emote);
             }
             await Task.CompletedTask;
         }
