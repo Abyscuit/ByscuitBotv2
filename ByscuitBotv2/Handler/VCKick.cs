@@ -27,8 +27,10 @@ namespace ByscuitBotv2.Handler
             Target = target;
             Reason = reason;
             VotesNeeded = UserCount;
-            TimeOutTime = TimeSpan.FromMinutes(1);
-            Expiration = DateTimeOffset.Now.AddMinutes(1);
+            TimeOutTime = TimeSpan.FromMinutes(1); 
+
+            DateTime currentTime = DateTime.UtcNow;
+            Expiration = ((DateTimeOffset)currentTime).AddMinutes(1);
         }
 
         public void ProcessVote(string respose)
