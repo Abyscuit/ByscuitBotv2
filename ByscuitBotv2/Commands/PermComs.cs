@@ -41,7 +41,7 @@ namespace ByscuitBotv2.Commands
             List<IUserMessage> Messages = new List<IUserMessage>();
             for(int i =0;i<UsersInChat.Length;i++) {
                 ulong UserID = UsersInChat[i].Id;
-                if (UserID != Target.VoiceChannel.Id && UserID != Initiator.Id)
+                if (UserID != Target.Id && UserID != Initiator.Id)
                 {
                     IUserMessage message = Utility.DirectMessage(UsersInChat[i], embed: VoteKick.CreatePrivateMessage()).GetAwaiter().GetResult();
                     var YesEmoji = new Emoji("✅");
@@ -53,6 +53,7 @@ namespace ByscuitBotv2.Commands
                 }
             }
             Console.WriteLine("Channels: " + Messages.Count);
+            VoteKick.SetDirectMessages(Messages.ToArray());
             RequestOptions options = RequestOptions.Default;
             options.AuditLogReason = text;
             //await Target.SetTimeOutAsync(TimeSpan.FromSeconds(1), options);

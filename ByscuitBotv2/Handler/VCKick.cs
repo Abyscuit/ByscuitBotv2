@@ -16,9 +16,9 @@ namespace ByscuitBotv2.Handler
         public SocketUser Target { get; set; }
         public static int VotesNeeded, YesVotes = 0, NoVotes = 0;
         public static IUserMessage[] DirectMessages;
-        public static List<IUserMessage> VotedMessages;
+        public static List<IUserMessage> VotedMessages = new List<IUserMessage>();
         public TimeSpan TimeOutTime; //60secs, 5mins, 10mins, 1hour, 1day, 1week
-        public static DateTime Expiration;
+        public static DateTimeOffset Expiration;
         public string Reason = "";
         public VCKick(SocketGuildUser initiator, SocketGuildUser target, string reason, int UserCount)
         {
@@ -28,7 +28,7 @@ namespace ByscuitBotv2.Handler
             Reason = reason;
             VotesNeeded = UserCount;
             TimeOutTime = TimeSpan.FromMinutes(1);
-            Expiration = DateTime.Now.AddMinutes(1);
+            Expiration = DateTimeOffset.Now.AddMinutes(1);
         }
 
         public void ProcessVote(string respose)
@@ -48,10 +48,15 @@ namespace ByscuitBotv2.Handler
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"A Vote Kick Has Been Started For {Target.Username}")
-                .WithDescription($"Reason: {Reason}\n\nVote by reacting to this message.\nExpires: <t:{Expiration.ToUnixTimestamp()}:R>")
+                .WithDescription($"Reason: {Reason}\n\nVote by reacting to this message.\nExpires: <t:{Expiration.ToUnixTimeSeconds()}:R>")
                 .WithCurrentTimestamp();
 
             return embed.Build();
+        }
+
+        public void SetDirectMessages(IUserMessage[] directMessages)
+        {
+            DirectMessages = directMessages;
         }
     }
 }

@@ -70,12 +70,12 @@ namespace byscuitBot
             this.client.ReactionAdded += Client_ReactionAdded;
         }
 
-        private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
+        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
             if (VCKick.DirectMessages.Contains(arg1.Value) && !VCKick.VotedMessages.Contains(arg1.Value)) {
                 Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
                 
-                arg3.Message.Value.ModifyAsync(m =>
+                await arg3.Message.Value.ModifyAsync(m =>
                 {
                     EmbedBuilder embed = new EmbedBuilder()
                         .WithColor(Color.Red)
@@ -90,7 +90,7 @@ namespace byscuitBot
                     PermComs.VOTE_IN_PROGRESS = false;
                 }
             }
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
         int postureTime = DateTime.Now.Hour / 2;
@@ -102,7 +102,7 @@ namespace byscuitBot
             // Check if Vote in progress
             if (PermComs.VOTE_IN_PROGRESS)
             {
-                if(VCKick.Expiration <= DateTime.Now) PermComs.VOTE_IN_PROGRESS=false;
+                if(VCKick.Expiration <= DateTimeOffset.Now) PermComs.VOTE_IN_PROGRESS=false;
             }
             /*
             // Posture Check
