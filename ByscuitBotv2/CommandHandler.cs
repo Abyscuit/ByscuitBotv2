@@ -72,8 +72,10 @@ namespace byscuitBot
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
+            Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
+            Console.WriteLine($"arg1: {arg1}");
+            Console.WriteLine($"arg2: {arg2}");
             if (VCKick.DirectMessages.Contains(arg1.Value) && !VCKick.VotedMessages.Contains(arg1.Value)) {
-                Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
                 
                 await arg3.Message.Value.ModifyAsync(m =>
                 {
