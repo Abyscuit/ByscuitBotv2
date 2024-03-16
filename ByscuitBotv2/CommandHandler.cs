@@ -72,7 +72,7 @@ namespace byscuitBot
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
-            if (arg3.User.IsBot) return;
+            if (arg3.User.Value.IsBot) return;
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
             Console.WriteLine($"arg1: {arg1.Id}");
             Console.WriteLine($"arg2: {arg2.Id}");
