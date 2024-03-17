@@ -12,8 +12,8 @@ namespace ByscuitBotv2.Handler
 {
     public class VCKick
     {
-        public static SocketUser Initiator { get; set; }
-        public static SocketUser Target { get; set; }
+        public static SocketGuildUser Initiator { get; set; }
+        public static SocketGuildUser Target { get; set; }
         public static int VotesNeeded, YesVotes = 0, NoVotes = 0;
         public static IUserMessage[] DirectMessages;
         public static List<IUserMessage> VotedMessages = new List<IUserMessage>();
@@ -32,6 +32,7 @@ namespace ByscuitBotv2.Handler
             VotesNeeded = UserCount;
             YesVotes = 1;
             NoVotes = 1;
+            VotedMessages = new List<IUserMessage>();
             TimeOutTime = TimeSpan.FromMinutes(1); 
 
             DateTime currentTime = DateTime.UtcNow;
@@ -46,15 +47,20 @@ namespace ByscuitBotv2.Handler
             if(VotedMessages.Count >= VotesNeeded)
             {
                 // Check if yes votes win
+                Console.WriteLine("Yes: " + YesVotes);
+                Console.WriteLine("Needed: " + VotesNeeded);
+                Console.WriteLine("VotedMessages.Count: " + VotedMessages.Count);
                 if (YesVotes - 1 >= VotesNeeded)
                 {
-                    // Time out user
+                    RequestOptions options = RequestOptions.Default;
+                    options.AuditLogReason = Reason;
+                    await Target.SetTimeOutAsync(TimeOutTime, options);
                 }
 
                 // Change embed to reflect votes and outcome
                 await PermComs.VOTE_MESSAGE.ModifyAsync(m =>
                 {
-                    m.Embeds.Value[0] = CreateCompletedMessage();
+                    m.Embed = CreateCompletedMessage();
                 });
                 PermComs.VOTE_IN_PROGRESS = false;
             }
@@ -62,7 +68,7 @@ namespace ByscuitBotv2.Handler
             {
                 await PermComs.VOTE_MESSAGE.ModifyAsync(m =>
                 {
-                    m.Embeds.Value[0] = CreatePublicMessage();
+                    m.Embed = CreatePublicMessage();
                 });
             }
         }
@@ -96,7 +102,7 @@ namespace ByscuitBotv2.Handler
                 .WithColor(Color.Red)
                 .WithTitle($"Vote Kick Has Ended For {Target.Username}")
                 .WithDescription($"Reason: {Reason}\n\nVotes: {VotedMessages.Count + 2}/{VotesNeeded + 2}\n" + 
-                    $"User was {((YesVotes - 1 > VotesNeeded) ? $"timed out for {TimeOutTime.TotalSeconds}secs" : "not timed out")}")
+                    $"User was {((YesVotes - 1 >= VotesNeeded) ? $"timed out for {TimeOutTime.TotalSeconds}secs" : "not timed out")}")
                 .WithCurrentTimestamp();
 
             return embed.Build();

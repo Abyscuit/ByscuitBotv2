@@ -73,33 +73,32 @@ namespace byscuitBot
         private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
             if (arg3.User.Value.IsBot) return Task.CompletedTask;
+
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
-            Console.WriteLine($"arg1: {arg1.Id}");
-            Console.WriteLine($"arg2: {arg2.Id}");
+            Console.WriteLine("");
             Console.WriteLine($"VCKick.DirectMessages: {VCKick.DirectMessages.Length}");
             Console.WriteLine($"VCKick.VotedMessages: {VCKick.VotedMessages.Count}");
-            IUserMessage directMessage = VCKick.CheckMsgInVote(arg1.Id);
+            Console.WriteLine("");
+            RestUserMessage directMessage = VCKick.CheckMsgInVote(arg1.Id) as RestUserMessage;
             bool isVoted = VCKick.CheckMsgAlreadyVoted(arg1.Id);
 
             Console.WriteLine($"isDMInList: {directMessage}");
             Console.WriteLine($"isVoted: {isVoted}");
             if (directMessage != null && !isVoted) {
-                Console.WriteLine("Set a vote!");
                 directMessage.ModifyAsync(m =>
                 {
-                    var OldEmbed = m.Embed.Value;
+                    m.Content = "";
+                    var OldEmbed = directMessage.Embeds.First();
                     EmbedBuilder embed = new EmbedBuilder()
                         .WithColor(Color.Red)
                         .WithTitle(OldEmbed.Title)
                         .WithDescription($"You Voted {arg3.Emote}")
                         .WithCurrentTimestamp();
-                    m.Embeds.Value[0] = embed.Build();
-                    m.Content = "> You Voted Yes";
+                    m.Embed = embed.Build();
                     Console.WriteLine($"{arg3.User} voted!");
                 });
-                VCKick.VotedMessages.Add(arg1.Value);
+                VCKick.VotedMessages.Add(directMessage);
                 VCKick.ProcessVote(arg3.Emote);
-                Console.WriteLine("Processed a vote!");
             }
             return Task.CompletedTask;
         }

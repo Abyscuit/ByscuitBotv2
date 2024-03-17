@@ -26,6 +26,11 @@ namespace ByscuitBotv2.Commands
                 await Context.Channel.SendMessageAsync("> You can't start a vote kick against yourself!");
                 return;
             }
+            if (Target.IsBot)
+            {
+                await Context.Channel.SendMessageAsync("> You can't start a vote kick against a bot!");
+                return;
+            }
             RequestOptions deleteOptions = RequestOptions.Default;
             deleteOptions.AuditLogReason = "Delete vote message";
             await Context.Message.DeleteAsync(deleteOptions);
@@ -47,6 +52,12 @@ namespace ByscuitBotv2.Commands
                 return;
             }
             SocketGuildUser[] UsersInChat = Utility.GetUndefeanedUsersFromChannel(Target.VoiceChannel);
+            int minUsers = 4;
+            if (UsersInChat.Length < minUsers)
+            {
+                await Context.Channel.SendMessageAsync($"> There must be at least {minUsers} people in the voice channel to start a vote kick!");
+                return;
+            }
             int deduction = 2;
             if (Target.IsSelfDeafened || Target.IsDeafened) deduction = 1;
             Handler.VCKick.StartVote(Initiator, Target, text, UsersInChat.Length - deduction);
@@ -65,9 +76,6 @@ namespace ByscuitBotv2.Commands
             Console.WriteLine("Channels: " + Messages.Count);
             Handler.VCKick.DirectMessages = Messages.ToArray();
             VOTE_MESSAGE = await Context.Channel.SendMessageAsync(embed: Handler.VCKick.CreatePublicMessage());
-            RequestOptions options = RequestOptions.Default;
-            options.AuditLogReason = text;
-            //await Target.SetTimeOutAsync(TimeSpan.FromSeconds(1), options);
         }
     }
 }
