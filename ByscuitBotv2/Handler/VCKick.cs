@@ -54,7 +54,7 @@ namespace ByscuitBotv2.Handler
                 // Change embed to reflect votes and outcome
                 await PermComs.VOTE_MESSAGE.ModifyAsync(m =>
                 {
-                    m.Embed = CreateCompletedMessage();
+                    m.Embeds.Value[0] = CreateCompletedMessage();
                 });
                 PermComs.VOTE_IN_PROGRESS = false;
             }
@@ -62,7 +62,7 @@ namespace ByscuitBotv2.Handler
             {
                 await PermComs.VOTE_MESSAGE.ModifyAsync(m =>
                 {
-                    m.Embed = CreatePublicMessage();
+                    m.Embeds.Value[0] = CreatePublicMessage();
                 });
             }
         }

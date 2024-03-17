@@ -93,7 +93,8 @@ namespace byscuitBot
                         .WithTitle(OldEmbed.Title)
                         .WithDescription($"You Voted {arg3.Emote}")
                         .WithCurrentTimestamp();
-                    m.Embed = embed.Build();
+                    m.Embeds.Value[0] = embed.Build();
+                    m.Content = "> You Voted Yes";
                 });
                 VCKick.VotedMessages.Add(arg1.Value);
                 VCKick.ProcessVote(arg3.Emote);
