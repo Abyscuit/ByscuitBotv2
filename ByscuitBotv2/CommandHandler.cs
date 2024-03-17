@@ -84,7 +84,7 @@ namespace byscuitBot
             Console.WriteLine($"isDMInList: {isDMInList}");
             Console.WriteLine($"isVoted: {isVoted}");
             if (isDMInList && !isVoted) {
-                IUserMessage message = await arg1.GetOrDownloadAsync();
+                RestUserMessage message = await arg1.GetOrDownloadAsync() as RestUserMessage;
                 await message.ModifyAsync(m =>
                 {
                     var OldEmbed = m.Embed.GetValueOrDefault();

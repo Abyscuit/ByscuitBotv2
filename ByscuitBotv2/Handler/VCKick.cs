@@ -79,7 +79,6 @@ namespace ByscuitBotv2.Handler
         }
         public static Embed CreatePublicMessage()
         {
-            VotesNeeded = VotedMessages.Count;
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"A Vote Kick Has Been Started For {Target.Username}")
@@ -93,7 +92,6 @@ namespace ByscuitBotv2.Handler
         }
         public static Embed CreateCompletedMessage()
         {
-            VotesNeeded = VotedMessages.Count;
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
                 .WithTitle($"Vote Kick Has Ended For {Target.Username}")
