@@ -70,9 +70,9 @@ namespace byscuitBot
             this.client.ReactionAdded += Client_ReactionAdded;
         }
 
-        private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
+        private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
-            if (arg3.User.Value.IsBot) return;
+            if (arg3.User.Value.IsBot) return Task.CompletedTask;
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
             Console.WriteLine($"arg1: {arg1.Id}");
             Console.WriteLine($"arg2: {arg2.Id}");
@@ -85,7 +85,7 @@ namespace byscuitBot
             Console.WriteLine($"isVoted: {isVoted}");
             if (directMessage != null && !isVoted) {
                 Console.WriteLine("Set a vote!");
-                await directMessage.ModifyAsync(m =>
+                directMessage.ModifyAsync(m =>
                 {
                     var OldEmbed = m.Embed.Value;
                     EmbedBuilder embed = new EmbedBuilder()
@@ -101,7 +101,7 @@ namespace byscuitBot
                 VCKick.ProcessVote(arg3.Emote);
                 Console.WriteLine("Processed a vote!");
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
         int postureTime = DateTime.Now.Hour / 2;
