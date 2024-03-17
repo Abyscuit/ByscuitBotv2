@@ -107,13 +107,13 @@ namespace ByscuitBotv2.Handler
             DirectMessages = directMessages;
         }
 
-        public static bool CheckMsgInVote(ulong MessageID)
+        public static IUserMessage CheckMsgInVote(ulong MessageID)
         {
             for(int i = 0; i < DirectMessages.Length; i++)
             {
-                if (DirectMessages[i].Id == MessageID) return true;
+                if (DirectMessages[i].Id == MessageID) return DirectMessages[i];
             }
-            return false;
+            return null;
         }
         public static bool CheckMsgAlreadyVoted(ulong MessageID)
         {

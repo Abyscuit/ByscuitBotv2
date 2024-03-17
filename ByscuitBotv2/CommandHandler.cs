@@ -78,14 +78,13 @@ namespace byscuitBot
             Console.WriteLine($"arg2: {arg2.Id}");
             Console.WriteLine($"VCKick.DirectMessages: {VCKick.DirectMessages.Length}");
             Console.WriteLine($"VCKick.VotedMessages: {VCKick.VotedMessages.Count}");
-            bool isDMInList = VCKick.CheckMsgInVote(arg1.Id);
+            IUserMessage directMessage = VCKick.CheckMsgInVote(arg1.Id);
             bool isVoted = VCKick.CheckMsgAlreadyVoted(arg1.Id);
 
-            Console.WriteLine($"isDMInList: {isDMInList}");
+            Console.WriteLine($"isDMInList: {directMessage}");
             Console.WriteLine($"isVoted: {isVoted}");
-            if (isDMInList && !isVoted) {
-                var message = arg3.Message.Value;
-                await message.ModifyAsync(m =>
+            if (directMessage != null && !isVoted) {
+                await directMessage.ModifyAsync(m =>
                 {
                     var OldEmbed = m.Embed.Value;
                     EmbedBuilder embed = new EmbedBuilder()
