@@ -49,21 +49,21 @@ namespace ByscuitBotv2.Commands
             SocketGuildUser[] UsersInChat = Utility.GetUndefeanedUsersFromChannel(Target.VoiceChannel);
             int deduction = 2;
             if (Target.IsSelfDeafened || Target.IsDeafened) deduction = 1;
-            VCKick VoteKick = new VCKick(Initiator, Target, text, UsersInChat.Length - deduction);
+            Handler.VCKick.StartVote(Initiator, Target, text, UsersInChat.Length - deduction);
             // Make sure there is at least 5 people minus the Initiator and Target.
             List<IUserMessage> Messages = new List<IUserMessage>();
             for(int i =0;i<UsersInChat.Length;i++) {
                 ulong UserID = UsersInChat[i].Id;
                 if (UserID != Target.Id && UserID != Initiator.Id)
                 {
-                    IUserMessage message = Utility.DirectMessage(UsersInChat[i], embed: VoteKick.CreatePrivateMessage()).GetAwaiter().GetResult();
+                    IUserMessage message = Utility.DirectMessage(UsersInChat[i], embed: Handler.VCKick.CreatePrivateMessage()).GetAwaiter().GetResult();
                     await message.AddReactionsAsync(Handler.VCKick.EMOJIS);
                     Console.WriteLine("Channel add: " + message.Id);
                     Messages.Add(message);
                 }
             }
             Console.WriteLine("Channels: " + Messages.Count);
-            VoteKick.SetDirectMessages(Messages.ToArray());
+            Handler.VCKick.DirectMessages = Messages.ToArray();
             VOTE_MESSAGE = await Context.Channel.SendMessageAsync(embed: Handler.VCKick.CreatePublicMessage());
             RequestOptions options = RequestOptions.Default;
             options.AuditLogReason = text;

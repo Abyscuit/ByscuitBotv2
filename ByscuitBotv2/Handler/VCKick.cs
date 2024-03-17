@@ -23,7 +23,7 @@ namespace ByscuitBotv2.Handler
         public static Emoji YES_EMOJI = new Emoji("✅");
         public static Emoji NO_EMOJI = new Emoji("❌");
         public static Emoji[] EMOJIS = { YES_EMOJI, NO_EMOJI };
-        public VCKick(SocketGuildUser initiator, SocketGuildUser target, string reason, int UserCount)
+        public static void StartVote(SocketGuildUser initiator, SocketGuildUser target, string reason, int UserCount)
         {
             PermComs.VOTE_IN_PROGRESS = true;
             Initiator = initiator;
@@ -67,7 +67,7 @@ namespace ByscuitBotv2.Handler
             }
         }
 
-        public Embed CreatePrivateMessage()
+        public static Embed CreatePrivateMessage()
         {
             EmbedBuilder embed = new EmbedBuilder()
                 .WithColor(Color.Red)
