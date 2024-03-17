@@ -47,7 +47,9 @@ namespace ByscuitBotv2.Commands
                 return;
             }
             SocketGuildUser[] UsersInChat = Utility.GetUndefeanedUsersFromChannel(Target.VoiceChannel);
-            VCKick VoteKick = new VCKick(Initiator, Target, text, UsersInChat.Length - 2);
+            int deduction = 2;
+            if (Target.IsSelfDeafened || Target.IsDeafened) deduction = 1;
+            VCKick VoteKick = new VCKick(Initiator, Target, text, UsersInChat.Length - deduction);
             // Make sure there is at least 5 people minus the Initiator and Target.
             List<IUserMessage> Messages = new List<IUserMessage>();
             for(int i =0;i<UsersInChat.Length;i++) {

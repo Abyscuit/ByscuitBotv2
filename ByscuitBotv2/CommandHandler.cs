@@ -84,10 +84,10 @@ namespace byscuitBot
             Console.WriteLine($"isDMInList: {isDMInList}");
             Console.WriteLine($"isVoted: {isVoted}");
             if (isDMInList && !isVoted) {
-                RestUserMessage message = await arg1.GetOrDownloadAsync() as RestUserMessage;
+                var message = arg3.Message.Value;
                 await message.ModifyAsync(m =>
                 {
-                    var OldEmbed = m.Embed.GetValueOrDefault();
+                    var OldEmbed = m.Embed.Value;
                     EmbedBuilder embed = new EmbedBuilder()
                         .WithColor(Color.Red)
                         .WithTitle(OldEmbed.Title)
