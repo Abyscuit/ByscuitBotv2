@@ -84,6 +84,7 @@ namespace byscuitBot
             Console.WriteLine($"isDMInList: {directMessage}");
             Console.WriteLine($"isVoted: {isVoted}");
             if (directMessage != null && !isVoted) {
+                Console.WriteLine("Set a vote!");
                 await directMessage.ModifyAsync(m =>
                 {
                     var OldEmbed = m.Embed.Value;
@@ -94,9 +95,11 @@ namespace byscuitBot
                         .WithCurrentTimestamp();
                     m.Embeds.Value[0] = embed.Build();
                     m.Content = "> You Voted Yes";
+                    Console.WriteLine($"{arg3.User} voted!");
                 });
                 VCKick.VotedMessages.Add(arg1.Value);
                 VCKick.ProcessVote(arg3.Emote);
+                Console.WriteLine("Processed a vote!");
             }
             await Task.CompletedTask;
         }
