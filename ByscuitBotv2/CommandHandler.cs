@@ -72,7 +72,7 @@ namespace byscuitBot
 
         private async Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
-            if (arg3.User.Value.IsBot) await Task.CompletedTask;
+            if (arg3.User.Value.IsBot || PermComs.VOTE_IN_PROGRESS) await Task.CompletedTask;
 
             Console.WriteLine($"{arg3.User} reacted with {arg3.Emote.Name}");
             Console.WriteLine("");
@@ -84,7 +84,17 @@ namespace byscuitBot
 
             Console.WriteLine($"isDMInList: {directMessage}");
             Console.WriteLine($"isVoted: {isVoted}");
-            if (directMessage != null && !isVoted) {
+            bool expired = VCKick.Expiration <= DateTimeOffset.Now;
+            if (expired)
+            {
+                await PermComs.VOTE_MESSAGE.ModifyAsync(m =>
+                {
+                    m.Embed = VCKick.CreateCompletedMessage();
+                });
+                PermComs.VOTE_IN_PROGRESS = false;
+                await Task.CompletedTask;
+            }
+            if (!expired && directMessage != null && !isVoted) {
                 await directMessage.ModifyAsync(m =>
                 {
                     m.Content = "";
