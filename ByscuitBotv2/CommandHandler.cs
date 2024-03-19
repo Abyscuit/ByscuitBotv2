@@ -107,12 +107,21 @@ namespace byscuitBot
         RestUserMessage sentMessage = null;
         int count = 0;
         public static DateTime WS_UPDATED_DATE = DateTime.Now;
-        private Task Client_LatencyUpdated(int arg1, int arg2)
+        private async Task Client_LatencyUpdated(int arg1, int arg2)
         {
             // Check if Vote in progress
             if (PermComs.VOTE_IN_PROGRESS)
             {
-                if(VCKick.Expiration <= DateTimeOffset.Now) PermComs.VOTE_IN_PROGRESS=false;
+                Console.WriteLine($"VCKick.Expiration: {VCKick.Expiration.ToUnixTimeSeconds()}");
+                Console.WriteLine($"DateTimeOffset.Now: {DateTimeOffset.Now.ToUnixTimeSeconds()}");
+                if (VCKick.Expiration <= DateTimeOffset.Now)
+                {
+                    await PermComs.VOTE_MESSAGE.ModifyAsync(m =>
+                    {
+                        m.Embed = VCKick.CreateCompletedMessage();
+                    });
+                    PermComs.VOTE_IN_PROGRESS = false;
+                }
             }
             /*
             // Posture Check
@@ -152,7 +161,7 @@ namespace byscuitBot
 
             // WorkerStates Update
             if(WS_UPDATED_DATE.AddHours(5) < DateTime.Now) WorkerStates.UpdateStates();
-            return Task.CompletedTask;
+            await Task.CompletedTask;
         }
 
         private Task Client_GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> arg1, SocketGuildUser arg2)

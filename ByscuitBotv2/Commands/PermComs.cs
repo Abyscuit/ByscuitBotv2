@@ -16,7 +16,7 @@ namespace ByscuitBotv2.Commands
     {
         public static bool VOTE_IN_PROGRESS = false;
         public static RestUserMessage VOTE_MESSAGE = null;
-        [Command("VCKick")]
+        [Command("VCKick", RunMode = RunMode.Async)]
         [Alias("voicekick", "kickvc", "votekick")]
         [Summary("Starts a timeout vote from for a user with an optional reason - Usage: {0}vckick <user> <reason>")]
         public async Task VCKick(SocketGuildUser Target, [Remainder] string text = "")
@@ -29,6 +29,11 @@ namespace ByscuitBotv2.Commands
             if (Target.IsBot)
             {
                 await Context.Channel.SendMessageAsync("> You can't start a vote kick against a bot!");
+                return;
+            }
+            if (Target.VoiceChannel== null)
+            {
+                await Context.Channel.SendMessageAsync("> You can't start a vote kick against someone not in a voice channel!");
                 return;
             }
             RequestOptions deleteOptions = RequestOptions.Default;
