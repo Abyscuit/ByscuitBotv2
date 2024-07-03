@@ -96,7 +96,7 @@ namespace ByscuitBotv2.Commands
         {
             SocketGuildUser user = (SocketGuildUser)Context.User;
             Account account = CreditsSystem.GetAccount(user);
-            bool isHDPrompt = prompt.ToLower().Contains(" HD");
+            bool isHDPrompt = prompt.ToLower().Contains(" hd");
             string number = prompt.Split(' ')[0];
             int numberOfImages = 1;
             int price = isHDPrompt ? 5 : 3;
