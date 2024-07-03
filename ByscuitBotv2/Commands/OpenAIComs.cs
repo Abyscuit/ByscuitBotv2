@@ -97,9 +97,13 @@ namespace ByscuitBotv2.Commands
             SocketGuildUser user = (SocketGuildUser)Context.User;
             Account account = CreditsSystem.GetAccount(user);
             bool isHDPrompt = prompt.ToLower().Contains(" hd");
+            bool isHiResPrompt = prompt.ToLower().Contains(" 4k");
+            string resolution = isHiResPrompt ? "1792×1024" : "1024x1024";
+            string quality = isHDPrompt ? "hd" : "standard";
             string number = prompt.Split(' ')[0];
             int numberOfImages = 1;
-            int price = isHDPrompt ? 5 : 3;
+            int price = isHDPrompt ? 4 : 3;
+            if (isHiResPrompt) price += 1;
             /*
             if (int.TryParse(number, out numberOfImages))
             {
@@ -126,7 +130,7 @@ namespace ByscuitBotv2.Commands
                         // TODO: Loop for amount of images
                         // save the image downloaded count and paths in an array
                         // send all images at the end
-                        string imageUrl = await Images.createImage(prompt, "1", "1024x1024", model: "dall-e-3", quality: (isHDPrompt ? "hd" : "standard"));
+                        string imageUrl = await Images.createImage(prompt, "1", resolution, model: "dall-e-3", quality: quality);
                         string imgName = "AI-image" + new Random((int)DateTime.Now.Ticks).Next(0, int.MaxValue);
                         string tempPath = Directory.GetCurrentDirectory() + $"/AI-Images/";
                         string fullImgName = $"{imgName}.png";
@@ -142,8 +146,15 @@ namespace ByscuitBotv2.Commands
                                 if (user.Roles.Contains(CommandHandler.AIUserRole))
                                     user.RemoveRoleAsync(CommandHandler.AIUserRole).Wait();
                             }
-                            string msg = $"> **{Context.User.Mention}'s AI Generated Image** *({account.credits} Credits left)*\n> **Prompt:** __{prompt}__";
-                            Context.Channel.SendFileAsync(new FileAttachment(fullPath), msg).Wait();
+                            EmbedBuilder embed = new EmbedBuilder();
+                            embed.WithAuthor($"Dalle-3 Generated Image", Context.Guild.IconUrl);
+                            embed.WithThumbnailUrl(user.GetAvatarUrl());
+                            embed.WithColor(36, 122, 191);
+                            embed.WithFields(new EmbedFieldBuilder[] { new EmbedFieldBuilder().WithIsInline(true).WithName("Credits Used").WithValue(price),
+                        new EmbedFieldBuilder().WithIsInline(true).WithName("Remaining Credits").WithValue(account.credits)
+                    });
+                            embed.WithDescription(prompt);
+                            Context.Channel.SendFileAsync(new FileAttachment(fullPath),text: Context.User.Mention, embed: embed.Build()).Wait();
                             if (File.Exists(fullPath)) File.Delete(fullPath);
                         };
                         client.DownloadFileAsync(new Uri(imageUrl), fullPath);
