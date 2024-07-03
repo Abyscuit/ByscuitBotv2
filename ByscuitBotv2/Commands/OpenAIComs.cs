@@ -98,7 +98,7 @@ namespace ByscuitBotv2.Commands
             Account account = CreditsSystem.GetAccount(user);
             bool isHDPrompt = prompt.ToLower().Contains(" hd");
             bool isHiResPrompt = prompt.ToLower().Contains(" 4k");
-            string resolution = isHiResPrompt ? "1792×1024" : "1024x1024";
+            string resolution = isHiResPrompt ? "1792x1024" : "1024x1024";
             string quality = isHDPrompt ? "hd" : "standard";
             string number = prompt.Split(' ')[0];
             int numberOfImages = 1;
