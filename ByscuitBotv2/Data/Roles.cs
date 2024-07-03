@@ -79,6 +79,14 @@ namespace ByscuitBotv2.Data
             return result;
         }
 
+        public static SocketRole GetRoleByName(string name, SocketGuild guild)
+        {
+            foreach (SocketRole role in guild.Roles)
+                if (role.Name.ToLower() == name.ToLower())
+                    return role;
+            return null;
+        }
+
         public static void AddRole(SocketRole role, int hours)
         {
             Role r = new Role();

@@ -17,6 +17,7 @@ namespace ByscuitBotv2.Modules
         static string MAIN_NET = "https://bsc-dataseed1.binance.org:443";
         static string TEST_NET = "https://data-seed-prebsc-1-s1.binance.org:8545";
         static string CURRENT_NET = TEST_NET; // Set the network to work on here
+        /*
         [Command("BNBRegister")]
         [Alias("bscregister", "bnbenable", "bscenable")]
         [Summary("Link your discord account to a Binance Smart Chain Wallet - Usage: {0}BNBRegister <password (optional)>")]
@@ -232,5 +233,6 @@ namespace ByscuitBotv2.Modules
             embed.WithCurrentTimestamp();
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
+        */
     }
 }

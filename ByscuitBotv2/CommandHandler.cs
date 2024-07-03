@@ -25,16 +25,17 @@ namespace byscuitBot
         DiscordSocketClient client;
         static CommandService service;
         public bool bBotID = false;
-        public static ulong BotID = 510066148285349900;// Placeholder but is dynamically set upon initialization
+        public static ulong BotID = 510066148285349900; // Placeholder but is dynamically set upon initialization
         public List<IMessage> oldMessage = new List<IMessage>();
         public static string prefix = "/";
         bool disconnected = false;
         string user = "";
         public static SocketRole PremiumByscuitRole = null;
         public static SocketRole AIUserRole = null;
-        public ulong UnbakedByscuitID = 1046926179552219226;
+        public static SocketRole FreshByscuitRole = null;
         public static SocketRole UnbakedByscuitRole = null; // 1046926179552219226
         public static SocketGuild Byscuits = null;
+        public static ulong ServerID = 1257795491232616629; // Da Byscuits 2
         Random random = new Random();
 
         /*
@@ -164,13 +165,13 @@ namespace byscuitBot
             */
             // Check if any new deposits are coming in
             // Might want to create a new thread for this
-            if (Deposit.NEW_DEPOSITS) {
-                printDEBUG($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
-                Deposit.CheckDepositClaims();
-            }
+            //if (Deposit.NEW_DEPOSITS) {
+            //    printDEBUG($"{Deposit.depositClaims.Count} Byscoin deposit claims...");
+            //    Deposit.CheckDepositClaims();
+            //}
 
-            // WorkerStates Update
-            if(WS_UPDATED_DATE.AddHours(5) < DateTime.Now) WorkerStates.UpdateStates();
+            //// WorkerStates Update
+            //if(WS_UPDATED_DATE.AddHours(5) < DateTime.Now) WorkerStates.UpdateStates();
             await Task.CompletedTask;
         }
 
@@ -234,29 +235,29 @@ namespace byscuitBot
 
             // ---- FIX THIS ----
             // Update user roles
-            Accounts.Account account = Accounts.GetUser(user.Id);
-            List<Roles.Role> roles = Roles.CheckRoles(account.GetHours());
-            bool newRoles = false;
-            string strRoles = "";
-            SocketGuildUser sUser = user as SocketGuildUser;
-            for (int i = 0; i < roles.Count; i++)
-            {
-                foreach (SocketRole sRole in guild.Roles)
-                {
-                    if (sRole.Id == roles[i].RoleID)
-                    {
-                        if (!sUser.Roles.Contains(sRole))
-                        {
-                            newRoles = true;
-                            sUser.AddRoleAsync(sRole);
-                            if (!String.IsNullOrEmpty(strRoles)) strRoles = $"[{sRole.Name}]";
-                            else strRoles += $" [{sRole.Name}]";
-                            continue;
-                        }
-                    }
-                }
-            }
-            printDEBUG($"Roles: {strRoles}");
+            //Accounts.Account account = Accounts.GetUser(user.Id);
+            //List<Roles.Role> roles = Roles.CheckRoles(account.GetHours());
+            //bool newRoles = false;
+            //string strRoles = "";
+            //SocketGuildUser sUser = user as SocketGuildUser;
+            //for (int i = 0; i < roles.Count; i++)
+            //{
+            //    foreach (SocketRole sRole in guild.Roles)
+            //    {
+            //        if (sRole.Id == roles[i].RoleID)
+            //        {
+            //            if (!sUser.Roles.Contains(sRole))
+            //            {
+            //                newRoles = true;
+            //                sUser.AddRoleAsync(sRole);
+            //                if (!String.IsNullOrEmpty(strRoles)) strRoles = $"[{sRole.Name}]";
+            //                else strRoles += $" [{sRole.Name}]";
+            //                continue;
+            //            }
+            //        }
+            //    }
+            //}
+            //printDEBUG($"Roles: {strRoles}");
             //if (newRoles) guild.DefaultChannel.SendMessageAsync($"> **{user}**_({user.Id})_ has earned **{strRoles}**!");
 
             return Task.CompletedTask;
@@ -350,15 +351,16 @@ namespace byscuitBot
 
         private Task Client_Ready()
         {
-            ulong AIUserID = 1047742786990002256;
+
             printConsole("Ready for inputs!");
             user = client.CurrentUser.ToString();
             Accounts.Load();
             Roles.Load();
-            Byscuits = client.GetGuild(246718514214338560); // Da Byscuits
-            PremiumByscuitRole = Byscuits.GetRole(765403412568735765); // Premium Byscuit role 765403412568735765
-            AIUserRole = Byscuits.GetRole(AIUserID);
-            UnbakedByscuitRole = Byscuits.GetRole(UnbakedByscuitID);
+            Byscuits = client.GetGuild(ServerID); // Da Byscuits
+            PremiumByscuitRole = Roles.GetRoleByName("Premium Byscuit", Byscuits); // Premium Byscuit role 765403412568735765
+            AIUserRole = Roles.GetRoleByName("AI User", Byscuits);
+            UnbakedByscuitRole = Roles.GetRoleByName("Dough", Byscuits);
+            FreshByscuitRole = Roles.GetRoleByName("Fresh Byscuit", Byscuits);
             CreditsSystem.LoadAccounts(Byscuits);
             BinanceWallet.Load();
             CashoutSystem.Load();
@@ -385,6 +387,14 @@ namespace byscuitBot
         private Task Client_Connected()
         {
             user = client.CurrentUser.ToString();
+
+            // Check if the bot ID is set to the correct ID
+            if (!bBotID)
+            {
+                BotID = client.CurrentUser.Id;
+                bBotID = true;
+            }
+
             if (!disconnected)
             {
                 printConsole($"Connected to discord as {user}");
@@ -394,6 +404,7 @@ namespace byscuitBot
                 
                 //for (int i = 1; i < lGuilds.Count; i++) guilds += "/" + lGuilds[i].Name;
                 //printConsole("Guilds: " + guilds);
+
             }
             else printConsole(user + " reconnected to discord");
             return Task.CompletedTask;
@@ -401,7 +412,6 @@ namespace byscuitBot
 
         public static List<CommandInfo> GetCommands()
         {
-
             return service.Commands.ToList();
         }
 
@@ -416,25 +426,15 @@ namespace byscuitBot
             if (msg == null) return;
             var context = new SocketCommandContext(client, msg);
 
-            // Check if the bot ID is set to the correct ID
-            if(!bBotID) BotID = client.CurrentUser.Id;
 
             SocketGuildUser user = (SocketGuildUser)context.User;
             bool isDM = context.IsPrivate;
 
             if (isDM) { HandlePrivateMessage(context); return; }
 
-            SocketRole fByscuit = null;
-            foreach(SocketRole role in context.Guild.Roles)
-            {
-                if(role.Name == "Fresh Byscuit")
-                {
-                    fByscuit = role;
-                    break;
-                }
-            }
-            if (fByscuit != null)
-                if (!context.User.IsBot && !user.Roles.Contains(fByscuit) && DateTimeOffset.Now.Subtract(user.JoinedAt.Value) >= new TimeSpan(3,0,0,0)) await user.AddRoleAsync(fByscuit);
+            if (FreshByscuitRole != null)
+                if (!context.User.IsBot && !user.Roles.Contains(FreshByscuitRole) && DateTimeOffset.Now.Subtract(user.JoinedAt.Value) >= new TimeSpan(3,0,0,0))
+                    await user.AddRoleAsync(FreshByscuitRole);
 
             int argPos = 0;
             //printConsole(context.Guild.Name);
@@ -501,9 +501,9 @@ namespace byscuitBot
         {
             string username = user.ToString();
             var channel = user.Guild.SystemChannel;
-            string msg = String.Format("**{0}** has joined the server!", username);  //Welcome Message
+            string msg = String.Format("**{0}** has joined the server!", username); //Welcome Message
             if (user.Id != BotID)
-                await channel.SendMessageAsync(msg);   //Welcomes the new user
+                await channel.SendMessageAsync(msg); //Welcomes the new user
 
             // Add user to the byscoin accounts
             CreditsSystem.AddUser(user);
@@ -522,6 +522,10 @@ namespace byscuitBot
 
         public async Task checkStats(SocketGuild guild)
         {
+            string CategoryName = "Stats",
+                BotCountName = "Bot Count: ",
+                UserCountName = "User Count: ",
+                MemberCountName = "Member Count: ";
             IReadOnlyCollection<SocketGuildUser> users = guild.Users;
 
             int botcount = 0;
@@ -530,11 +534,11 @@ namespace byscuitBot
             if (!guild.HasAllMembers) memberCount = guild.MemberCount;
 
             // Create a category for the server stats if it doesn't exist
-            if (!CategoryExist(guild, "Stats"))
+            if (!CategoryExist(guild, CategoryName))
             {
                 // Create the voice channels that report the stats
                 IReadOnlyCollection<SocketCategoryChannel> categoryChannels = guild.CategoryChannels;
-                RestCategoryChannel cat = await guild.CreateCategoryChannelAsync("Stats", m => { m.Position = 0;});
+                RestCategoryChannel cat = await guild.CreateCategoryChannelAsync(CategoryName, m => { m.Position = 0;});
 
                 // Create the permissions for the category
                 OverwritePermissions catPerms = cat.GetPermissionOverwrite(guild.EveryoneRole).GetValueOrDefault();
@@ -542,21 +546,21 @@ namespace byscuitBot
                 await cat.AddPermissionOverwriteAsync(guild.EveryoneRole, catPerms);
 
                 // If any of the channels don't exist create it
-                if (GetVoiceChannel("Bot Count", guild) == null)
+                if (GetVoiceChannel(BotCountName, guild) == null)
                 {
-                    RestVoiceChannel x = await guild.CreateVoiceChannelAsync("Bot Count: " + botcount);
+                    RestVoiceChannel x = await guild.CreateVoiceChannelAsync(BotCountName + botcount);
                     await x.ModifyAsync(m => { m.Position = 1; m.UserLimit = 0; m.CategoryId = cat.Id; });
                     await x.SyncPermissionsAsync();
                 }
-                if (GetVoiceChannel("User Count", guild) == null)
+                if (GetVoiceChannel(UserCountName, guild) == null)
                 {
-                    RestVoiceChannel z = await guild.CreateVoiceChannelAsync("User Count: " + (memberCount - botcount));
+                    RestVoiceChannel z = await guild.CreateVoiceChannelAsync(UserCountName + (memberCount - botcount));
                     await z.ModifyAsync(m => { m.Position = 0; m.UserLimit = 0; m.CategoryId = cat.Id; });
                     await z.SyncPermissionsAsync();
                 }
-                if (GetVoiceChannel("Member Count", guild) == null)
+                if (GetVoiceChannel(MemberCountName, guild) == null)
                 {
-                    RestVoiceChannel z = await guild.CreateVoiceChannelAsync("Member Count: " + memberCount);
+                    RestVoiceChannel z = await guild.CreateVoiceChannelAsync(MemberCountName + memberCount);
                     await z.ModifyAsync(m => { m.Position = 2; m.UserLimit = 0; m.CategoryId = cat.Id; });
                     await z.SyncPermissionsAsync();
                 }
@@ -564,6 +568,7 @@ namespace byscuitBot
             }
             else
             {
+                // Refactor later
                 SocketVoiceChannel botChan = GetVoiceChannel("Bot Count", guild);
                 SocketVoiceChannel userChan = GetVoiceChannel("User Count", guild);
                 SocketVoiceChannel memberChan = GetVoiceChannel("Member Count", guild);
@@ -571,10 +576,10 @@ namespace byscuitBot
                 int bots = int.Parse(botChan.Name.Split(':')[1]);
                 if (members != memberCount || botcount != bots)
                 {
-                    if (memberChan != null) await memberChan.ModifyAsync(m => m.Name = "Member Count: " + memberCount);
-                    if (botChan != null && int.Parse(botChan.Name.Split(':')[1]) != botcount) await botChan.ModifyAsync(m => m.Name = "Bot Count: " + botcount);
+                    if (memberChan != null) await memberChan.ModifyAsync(m => m.Name = MemberCountName + memberCount);
+                    if (botChan != null && int.Parse(botChan.Name.Split(':')[1]) != botcount) await botChan.ModifyAsync(m => m.Name = BotCountName + botcount);
                     int userVal = memberCount - botcount;
-                    if (userChan != null && int.Parse(userChan.Name.Split(':')[1]) != userVal) await userChan.ModifyAsync(m => m.Name = "User Count: " + userVal);
+                    if (userChan != null && int.Parse(userChan.Name.Split(':')[1]) != userVal) await userChan.ModifyAsync(m => m.Name = UserCountName + userVal);
                 }
             }
         }

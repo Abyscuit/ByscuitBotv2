@@ -188,7 +188,7 @@ namespace ByscuitBotv2.Modules
             Byscoin.Deposit.CreateDepositClaim(address, user.Id);
             await Context.Channel.SendMessageAsync("", false, embed.Build());
         }
-        */
+
         [Command("Withdraw")]
         [Alias("byscwithdraw", "withdrawbysc")]
         [Summary("Withdraw BYSC from your wallet to a Binance Smart Chain Wallet (BEP-20) - Usage: {0}Withdraw <amount> <address>")]
@@ -232,27 +232,29 @@ namespace ByscuitBotv2.Modules
                 await Context.Channel.SendMessageAsync(msg);
                 return;
             }
-            /*TransactionReceipt receipt = await account.SendBNB(address, amount);
-            if (receipt.Failed()) embed.Description = $"`Withdraw has failed.`";
-            else
-            {
-                embed.Description = $"`Withdraw has been sent.`";
-                embed.WithFields(new EmbedFieldBuilder[] {
-                    new EmbedFieldBuilder().WithIsInline(false).WithName("Hash").WithValue($"`{receipt.TransactionHash}`"),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue(amount),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue(await account.GetBalance()),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed)/ 100000000m),
-                    new EmbedFieldBuilder().WithIsInline(true).WithName("Index").WithValue(receipt.TransactionIndex),
-                });
-            }
-            embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });
-            embed.WithCurrentTimestamp();
-            await Context.Channel.SendMessageAsync("", false, embed.Build());
-            */
+            //TransactionReceipt receipt = await account.SendBNB(address, amount);
+            //if (receipt.Failed()) embed.Description = $"`Withdraw has failed.`";
+            //else
+            //{
+            //    embed.Description = $"`Withdraw has been sent.`";
+            //    embed.WithFields(new EmbedFieldBuilder[] {
+            //        new EmbedFieldBuilder().WithIsInline(false).WithName("Hash").WithValue($"`{receipt.TransactionHash}`"),
+            //        new EmbedFieldBuilder().WithIsInline(true).WithName("Amount Sent").WithValue(amount),
+            //        new EmbedFieldBuilder().WithIsInline(true).WithName("Balance Left").WithValue(await account.GetBalance()),
+            //        new EmbedFieldBuilder().WithIsInline(true).WithName("Gas Used").WithValue(Web3.Convert.FromWei(receipt.GasUsed)/ 100000000m),
+            //        new EmbedFieldBuilder().WithIsInline(true).WithName("Index").WithValue(receipt.TransactionIndex),
+            //    });
+            //}
+            //embed.WithFooter(new EmbedFooterBuilder() { Text = "Block Number: " + await BinanceWallet.web3.Eth.Blocks.GetBlockNumber.SendRequestAsync() });
+            //embed.WithCurrentTimestamp();
+            //await Context.Channel.SendMessageAsync("", false, embed.Build());
+            
         }
+        */
         #endregion
 
         #region Nanopool
+        /*
         [Command("Nanopool")]
         [Alias("Nanostats", "mining", "poolstats")]
         [Summary("Show the current nanopool stats for the miners - Usage: {0}Nanopool")]
@@ -339,7 +341,7 @@ namespace ByscuitBotv2.Modules
             string result = "> Nanopool Share count reset!";
             await Context.Channel.SendMessageAsync(result);
         }
-
+        */
         #endregion
 
         #region Byscoin

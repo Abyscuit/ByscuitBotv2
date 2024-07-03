@@ -16,6 +16,7 @@ namespace ByscuitBotv2.Lotto
     public class LottoCommands : ModuleBase<SocketCommandContext>
     {
         // try to figure out how to do internal transfers for gasless tips
+        /*
         Thread bgThread; // Thread for background tasking
         [Command("Entry")]
         [Alias("lottoentry", "lotto")]
@@ -71,7 +72,7 @@ namespace ByscuitBotv2.Lotto
             bgThread.Start();
             await Task.CompletedTask;
         }
-
+        */
         
     }
 }

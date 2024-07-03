@@ -377,11 +377,7 @@ namespace ByscuitBotv2.Modules
         [Summary("Gives requesting user the permission to type in #music - Usage: {0}dj")]
         public async Task RequestDJ(SocketGuildUser user = null)
         {
-            SocketRole djRole = null;
-            foreach(SocketRole role in Context.Guild.Roles)
-            {
-                if(role.Name == "DJ") { djRole = role; break; }
-            }
+            SocketRole djRole = Roles.GetRoleByName("DJ", Context.Guild);
             if(djRole == null)
             {
                 await Context.Channel.SendMessageAsync($"DJ Role not found!");
@@ -390,23 +386,20 @@ namespace ByscuitBotv2.Modules
 
             if (user == null) user = (SocketGuildUser)Context.User;
 
-            if (user != null)
+            if (user.Roles.Count < 1)
             {
-                if (user.Roles.Count < 1)
-                {
-                    await Context.Channel.SendMessageAsync($"> **_{user}_** must at least be a **Fresh Byscuit**!");
-                    return;
-                }
-                if (user.Roles.Contains(djRole))
-                {
-                    await Context.Channel.SendMessageAsync($"> **_{user}_** already has the DJ role!");
-                    return;
-                }
-                else
-                {
-                    await user.AddRoleAsync(djRole);
-                    await Context.Channel.SendMessageAsync($"> **_{user}_** has been given the DJ role!");
-                }
+                await Context.Channel.SendMessageAsync($"> **_{user}_** must at least be a **Fresh Byscuit**!");
+                return;
+            }
+            if (user.Roles.Contains(djRole))
+            {
+                await Context.Channel.SendMessageAsync($"> **_{user}_** already has the DJ role!");
+                return;
+            }
+            else
+            {
+                await user.AddRoleAsync(djRole);
+                await Context.Channel.SendMessageAsync($"> **_{user}_** has been given the DJ role!");
             }
         }
 
@@ -557,8 +550,10 @@ namespace ByscuitBotv2.Modules
 
             for (int i = sortedRoles.Count - 1; i >= 0; i--)
             {
+                // Fix this for new server
                 Roles.Role role = sortedRoles[i];
                 SocketRole sRole = Context.Guild.GetRole(role.RoleID);
+                if (sRole == null) throw new Exception("Role does not exist in this server");
                 roleNames += sRole.Name + "\n";
                 hours += role.Hours + "hrs\n";
             }
