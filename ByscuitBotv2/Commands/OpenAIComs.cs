@@ -22,7 +22,7 @@ namespace ByscuitBotv2.Commands
         [Command("AIImage")]
         [Alias("CreateAI", "AIImg", "imgai", "AIArt", "aicreate")]
         [Summary("Create an AI Generated image using AI (1 credit ($0.04) each use) - Usage: {0}AIArt <prompt>")]
-        public async Task AIGenerateImage([Remainder]string prompt)
+        public async Task AIGenerateImage([Remainder] string prompt)
         {
             SocketGuildUser user = (SocketGuildUser)Context.User;
             Account account = CreditsSystem.GetAccount(user);
@@ -84,7 +84,79 @@ namespace ByscuitBotv2.Commands
                         $"\n> **_Prompt failed!_**\n> **{e.Message}**");
                 }
             });
-            
+
+            Thread t = new Thread(threadStart);
+            t.Start();
+        }
+
+        [Command("Dalle3")]
+        [Alias("CreateAI3", "AIImg3", "imgai3", "AIArt3", "aicreate3")]
+        [Summary("Create an AI Generated image using Dalle-3 (3 credit ($0.12) each use) - Usage: {0}Dalle3 <prompt>")]
+        public async Task Dalle3GenerateImage([Remainder] string prompt)
+        {
+            SocketGuildUser user = (SocketGuildUser)Context.User;
+            Account account = CreditsSystem.GetAccount(user);
+            bool isHDPrompt = prompt.ToLower().Contains(" HD");
+            string number = prompt.Split(' ')[0];
+            int numberOfImages = 1;
+            int price = isHDPrompt ? 5 : 3;
+            /*
+            if (int.TryParse(number, out numberOfImages))
+            {
+                if (numberOfImages > 5) numberOfImages = 1;
+                else prompt = prompt.Substring(number.Length);
+            }
+            */
+            if (account.credits < numberOfImages * price)
+            {
+                await Context.Channel.SendMessageAsync("**Sorry you need to purchase more credits to use this function!**");
+                return;
+            }/*
+            if (!(user.Roles.Contains(CommandHandler.PremiumByscuitRole) || user.Roles.Contains(CommandHandler.AIUserRole))
+                && !user.GuildPermissions.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("**Sorry you need to be a server booster or have a paid membership to use this function!**");
+                return;
+            }*/
+            ThreadStart threadStart = new ThreadStart(async () => {
+                try
+                {
+                    using (WebClient client = new WebClient())
+                    {
+                        // TODO: Loop for amount of images
+                        // save the image downloaded count and paths in an array
+                        // send all images at the end
+                        string imageUrl = await Images.createImage(prompt, "1", "1024x1024", model: "dall-e-3", quality: (isHDPrompt ? "hd" : "standard"));
+                        string imgName = "AI-image" + new Random((int)DateTime.Now.Ticks).Next(0, int.MaxValue);
+                        string tempPath = Directory.GetCurrentDirectory() + $"/AI-Images/";
+                        string fullImgName = $"{imgName}.png";
+                        string fullPath = tempPath + fullImgName;
+                        if (!Directory.Exists(tempPath)) Directory.CreateDirectory(tempPath);
+                        Utility.printConsole("Fullpath to AI Image: " + fullPath);
+                        client.DownloadFileCompleted += (object sender, AsyncCompletedEventArgs e) =>
+                        {
+                            account.credits -= price;
+                            CreditsSystem.SaveFile();
+                            if (account.credits <= 0)
+                            {
+                                if (user.Roles.Contains(CommandHandler.AIUserRole))
+                                    user.RemoveRoleAsync(CommandHandler.AIUserRole).Wait();
+                            }
+                            string msg = $"> **{Context.User.Mention}'s AI Generated Image** *({account.credits} Credits left)*\n> **Prompt:** __{prompt}__";
+                            Context.Channel.SendFileAsync(new FileAttachment(fullPath), msg).Wait();
+                            if (File.Exists(fullPath)) File.Delete(fullPath);
+                        };
+                        client.DownloadFileAsync(new Uri(imageUrl), fullPath);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Utility.printERROR(e.Message);
+                    await Context.Channel.SendMessageAsync(user.Mention +
+                        $"\n> **_Prompt failed!_**\n> **{e.Message}**");
+                }
+            });
+
             Thread t = new Thread(threadStart);
             t.Start();
         }

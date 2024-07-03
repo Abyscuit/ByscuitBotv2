@@ -41,7 +41,7 @@ namespace ByscuitBotv2.Modules.OpenAI
             public string type;
         }
         // sizes 256x256, 512x512, or 1024x1024
-        public static async Task<string> createImage(string prompt, string numberOfImgs, string size)
+        public static async Task<string> createImage(string prompt, string numberOfImgs, string size, string quality = "standard", string model = "dall-e-2")
         {
             if (String.IsNullOrEmpty(prompt) ||
                 String.IsNullOrEmpty(numberOfImgs) ||
@@ -53,7 +53,9 @@ namespace ByscuitBotv2.Modules.OpenAI
             string escapedInput = prompt.Replace("\"", "\\\"");
             string json = $"{{\"prompt\":\"{escapedInput}\"," +
                           $"\"n\":{numberOfImgs}," +
-                          $"\"size\":\"{size}\"}}";
+                          $"\"size\":\"{size}\"," +
+                          $"\"quality\":\"{quality}\"," +
+                          $"\"model\":\"{model}\"}}";
             Utility.printConsole("json: " + json);
             var jsonContent = new StringContent(json);
             jsonContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
