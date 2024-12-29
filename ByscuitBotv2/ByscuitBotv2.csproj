@@ -273,6 +273,7 @@
     <Compile Include="Byscoin\CashoutSystem.cs" />
     <Compile Include="Byscoin\Deposit.cs" />
     <Compile Include="CommandHandler.cs" />
+    <Compile Include="Commands\FluxComs.cs" />
     <Compile Include="Commands\OpenAIComs.cs" />
     <Compile Include="Commands\PermComs.cs" />
     <Compile Include="Data\Account.cs" />
@@ -292,6 +293,8 @@
     <Compile Include="Commands\BSCComs.cs" />
     <Compile Include="Commands\ByscComs.cs" />
     <Compile Include="Commands\Misc.cs" />
+    <Compile Include="Modules\BFL\Config.cs" />
+    <Compile Include="Modules\BFL\Flux.cs" />
     <Compile Include="Modules\OpenAI\Config.cs" />
     <Compile Include="Modules\OpenAI\GPT-3.cs" />
     <Compile Include="Modules\OpenAI\Images.cs" />
