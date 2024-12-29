@@ -67,7 +67,7 @@ namespace ByscuitBotv2.Modules.OpenAI
             string escapedInput = JsonConvert.SerializeObject(prompt); //prompt.Replace("\"", "\\\"");
             string systemMsg = JsonConvert.SerializeObject("You are ChatGPT, a large language model trained by OpenAI, based on the GPT-4o architecture.\nKnowledge cutoff: 2023-10\nCurrent date: 2024-12-28");
             Console.WriteLine("Prompt:\n" + escapedInput);
-            string model = "gpt-4o-latest";
+            string model = "gpt-4o";
             //int maxTokens = 3000;
             //string json = $"{{\"model\":\"{model}\",\"prompt\":\"{escapedInput}\"," +
             //        $"\"max_tokens\":{maxTokens},\"stream\":false}}";
