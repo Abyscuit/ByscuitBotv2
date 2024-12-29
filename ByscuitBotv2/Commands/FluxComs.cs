@@ -28,24 +28,11 @@ namespace ByscuitBotv2.Commands
             Account account = CreditsSystem.GetAccount(user);
             string number = prompt.Split(' ')[0];
             int numberOfImages = 1;
-            /*
-            if (int.TryParse(number, out numberOfImages))
-            {
-                if (numberOfImages > 5) numberOfImages = 1;
-                else prompt = prompt.Substring(number.Length);
-            }
-            */
             if (account.credits < numberOfImages)
             {
                 await Context.Channel.SendMessageAsync("**Sorry you need to purchase more credits to use this function!**");
                 return;
-            }/*
-            if (!(user.Roles.Contains(CommandHandler.PremiumByscuitRole) || user.Roles.Contains(CommandHandler.AIUserRole))
-                && !user.GuildPermissions.Administrator)
-            {
-                await Context.Channel.SendMessageAsync("**Sorry you need to be a server booster or have a paid membership to use this function!**");
-                return;
-            }*/
+            }
             ThreadStart threadStart = new ThreadStart(async () => {
                 try
                 {
@@ -53,9 +40,6 @@ namespace ByscuitBotv2.Commands
                     
                     using (WebClient client = new WebClient())
                     {
-                        // TODO: Loop for amount of images
-                        // save the image downloaded count and paths in an array
-                        // send all images at the end
                         string imageUrl = await Flux.GenerateImage(prompt);
                         string imgName = "AI-image" + new Random((int)DateTime.Now.Ticks).Next(0, int.MaxValue);
                         string tempPath = Directory.GetCurrentDirectory() + $"/AI-Images/";

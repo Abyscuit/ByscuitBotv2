@@ -51,12 +51,12 @@ namespace ByscuitBotv2.Modules.BFL
 
         public struct ResultData
         {
-             public string sample; // "https://delivery-eu1.bfl.ai/results/6c27730604b945369335d3d385f4369a/sample.jpeg?se=2024-12-29T05%3A39%3A37Z&sp=r&sv=2024-11-04&sr=b&rsct=image/jpeg&sig=yxrNs%2BOhPWjvnqm1lKTyQh%2Blhjlhv491Bz/s21UX65w%3D",
-             public string prompt; // "fat black women dancin in an alley with trump",
-             public uint seed; // 3392768630,
-             public double start_time; // 1735450176.362204,
-             public double end_time; // 1735450177.853745,
-             public double duration; // 1.4915409088134766
+             public string sample;
+             public string prompt;
+             public uint seed;
+             public double start_time;
+             public double end_time;
+             public double duration;
         }
 
         public class ProPrompt
@@ -84,10 +84,6 @@ namespace ByscuitBotv2.Modules.BFL
             Console.WriteLine(JsonConvert.SerializeObject(promptReq));
 
             var content = new StringContent(JsonConvert.SerializeObject(promptReq), Encoding.UTF8, "application/json");
-            //var options = new HttpRequestMessage(HttpMethod.Post, new Uri(IMG_GEN))
-            //{
-            //    Content = new StringContent(promptReq.ToString(), Encoding.UTF8, "application/json")
-            //};
             HttpClient client = new HttpClient();
             client.DefaultRequestHeaders.Add("X-Key", API_KEY);
             var response = await client.PostAsync(IMG_GEN, content);
